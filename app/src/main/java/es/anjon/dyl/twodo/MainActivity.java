@@ -29,6 +29,7 @@ import com.google.firebase.firestore.QuerySnapshot;
 import java.util.HashMap;
 import java.util.Map;
 
+import es.anjon.dyl.twodo.models.Pair;
 import es.anjon.dyl.twodo.models.TwoDoList;
 import es.anjon.dyl.twodo.models.User;
 
@@ -37,6 +38,7 @@ public class MainActivity extends AppCompatActivity
 
     private static final String TAG = "MainActivity";
     private User mUser;
+    private Pair mPair;
     private FloatingActionButton mFab;
     private NavigationView mNavigationView;
     private SubMenu mListMenu;
@@ -75,8 +77,10 @@ public class MainActivity extends AppCompatActivity
             startActivity(new Intent(this, SettingsActivity.class));
         } else {
             mUser = new User(fbUser);
-            updateUI();
+            updateUserUI();
         }
+
+
     }
 
     @Override
@@ -132,13 +136,13 @@ public class MainActivity extends AppCompatActivity
         Map<String, Boolean> items = new HashMap<>();
         items.put("Do the shopping", Boolean.FALSE);
         TwoDoList twoDoList = new TwoDoList("Test TwoDoList", items);
-        mDb.collection(mUser.getListsCollectionPath()).add(twoDoList);
+        mDb.collection(mPair.getListsCollectionPath()).add(twoDoList);
     }
 
     /**
      * When the user is logged in, update the navigation UI and handlers
      */
-    private void updateUI() {
+    private void updateUserUI() {
         if (mUser == null) {
             return;
         }
@@ -155,8 +159,16 @@ public class MainActivity extends AppCompatActivity
         nameView.setText(mUser.getName());
         TextView emailView = (TextView) header.findViewById(R.id.email);
         emailView.setText(mUser.getEmail());
+    }
 
-        mDb.collection(mUser.getListsCollectionPath()).addSnapshotListener(new EventListener<QuerySnapshot>() {
+    /**
+     * When the pair is available, update the lists
+     */
+    private void updatePairUI() {
+        if (mPair == null) {
+            return;
+        }
+        mDb.collection(mPair.getListsCollectionPath()).addSnapshotListener(new EventListener<QuerySnapshot>() {
             @Override
             public void onEvent(@Nullable QuerySnapshot snapshots,
                                 @Nullable FirebaseFirestoreException e) {
@@ -190,7 +202,7 @@ public class MainActivity extends AppCompatActivity
         mFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                addList();
+                //addList();
             }
         });
     }

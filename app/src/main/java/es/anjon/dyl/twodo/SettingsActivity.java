@@ -1,9 +1,10 @@
 package es.anjon.dyl.twodo;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.nfc.NdefMessage;
-import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
 import android.nfc.NfcEvent;
 import android.os.Bundle;
@@ -21,45 +22,48 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
-import java.util.UUID;
-
+import es.anjon.dyl.twodo.models.Pair;
 import es.anjon.dyl.twodo.models.User;
-
-import static android.nfc.NdefRecord.createMime;
 
 public class SettingsActivity extends Activity implements
         View.OnClickListener, NfcAdapter.CreateNdefMessageCallback {
 
     private static final String TAG = "SettingsActivity";
     private static final int RC_SIGN_IN = 9001;
-    private static final String MIME_TYPE = "application/vnd.es.anjon.dyl.twodo";
 
     private FirebaseAuth mAuth;
+    private FirebaseFirestore mDb;
     private GoogleSignInClient mGoogleSignInClient;
     private TextView mNameTextView;
     private TextView mEmailTextView;
-    private TextView mPairingIdTextView;
+    private TextView mPairIdTextView;
     private NfcAdapter mNfcAdapter;
-    private String mPairingId;
+    private Pair mPair;
     private User mUser;
+    private SharedPreferences mSharedPrefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
-        // Views
+        mSharedPrefs = getSharedPreferences(Pair.SHARED_PREFS_KEY, Context.MODE_PRIVATE);
+
         mNameTextView = findViewById(R.id.name);
         mEmailTextView = findViewById(R.id.email);
-        mPairingIdTextView = findViewById(R.id.pairing_id);
+        mPairIdTextView = findViewById(R.id.pair_id);
 
-        // Button listeners
         findViewById(R.id.sign_in_button).setOnClickListener(this);
         findViewById(R.id.sign_out_button).setOnClickListener(this);
         findViewById(R.id.disconnect_button).setOnClickListener(this);
@@ -73,6 +77,7 @@ public class SettingsActivity extends Activity implements
                 .build();
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
         mAuth = FirebaseAuth.getInstance();
+        mDb = FirebaseFirestore.getInstance();
 
         // Check for available NFC Adapter
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
@@ -88,6 +93,7 @@ public class SettingsActivity extends Activity implements
         super.onStart();
         if (mAuth.getCurrentUser() != null) {
             mUser = new User(mAuth.getCurrentUser());
+            loadPair(mSharedPrefs.getString(Pair.SHARED_PREFS_KEY, null));
         }
         updateUI();
     }
@@ -111,17 +117,53 @@ public class SettingsActivity extends Activity implements
         }
     }
 
+    /**
+     * Create the NFC message to send based on the new Pair Request
+     * @param event NFC event
+     * @return the NFC message to beam with the Pair Request id
+     */
     @Override
     public NdefMessage createNdefMessage(NfcEvent event) {
-        NdefMessage msg = new NdefMessage(new NdefRecord[] {
-            createMime(MIME_TYPE, mPairingId.getBytes()),
-            NdefRecord.createApplicationRecord("es.anjon.dyl.twodo")
-        });
-        return msg;
+        return mPair.createNfcMessage();
+    }
+
+    @Override
+    public void onClick(View v) {
+        int i = v.getId();
+        if (i == R.id.sign_in_button) {
+            signIn();
+        } else if (i == R.id.sign_out_button) {
+            signOut();
+        } else if (i == R.id.disconnect_button) {
+            revokeAccess();
+        } else if (i == R.id.pair_button) {
+            pair();
+        } else if (i == R.id.unpair_button) {
+            // TODO Removing pairing
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (mAuth.getCurrentUser() != null) {
+            mUser = new User(mAuth.getCurrentUser());
+            // Check to see that the Activity started due to an Android Beam
+            if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(getIntent().getAction())) {
+                processPairIntent(getIntent());
+            }
+        }
+        updateUI();
+    }
+
+    @Override
+    public void onNewIntent(Intent intent) {
+        // onResume gets called after this to handle the intent
+        setIntent(intent);
     }
 
     /**
-     * Authenticate to Firebase with Google Account
+     * Complete authentication with Google Account
      * @param acct Google Account
      */
     private void firebaseAuthWithGoogle(GoogleSignInAccount acct) {
@@ -168,7 +210,7 @@ public class SettingsActivity extends Activity implements
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         mUser = null;
-                        mPairingId = null;
+                        mPair = null;
                         updateUI();
                     }
                 });
@@ -187,7 +229,7 @@ public class SettingsActivity extends Activity implements
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         mUser = null;
-                        mPairingId = null;
+                        mPair = null;
                         updateUI();
                     }
                 });
@@ -198,9 +240,46 @@ public class SettingsActivity extends Activity implements
      * Add a listener for document to wait for pairing complete
      */
     private void pair() {
-        mPairingId = UUID.randomUUID().toString();
-        updateUI();
-        mNfcAdapter.setNdefPushMessageCallback(this, this);
+        mPair = new Pair(mUser);
+        mDb.collection(Pair.COLLECTION_NAME).add(mPair)
+                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                    @Override
+                    public void onSuccess(DocumentReference ref) {
+                        Log.d(TAG, "DocumentSnapshot written with ID: " + ref.getId());
+                        mPair.setId(ref.getId());
+                        mNfcAdapter.setNdefPushMessageCallback(
+                                SettingsActivity.this, SettingsActivity.this);
+                        mSharedPrefs.edit().putString(Pair.SHARED_PREFS_KEY, mPair.getId()).apply();
+                        //TODO add listener for pair change to get 'to' user details
+                        updateUI();
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.e(TAG, "Error adding document", e);
+                    }
+                });
+    }
+
+    /**
+     * Load the pair details from the database
+     * @param pairId database key
+     */
+    private void loadPair(String pairId) {
+        if (pairId == null) {
+            return;
+        }
+        //TODO add spinner while the pair details load to prevent trying to pair again?
+        DocumentReference docRef = mDb.collection(Pair.COLLECTION_NAME).document(pairId);
+        docRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+            @Override
+            public void onSuccess(DocumentSnapshot doc) {
+                mPair = doc.toObject(Pair.class);
+                mPair.setId(doc.getId());
+                updateUI();
+            }
+        });
     }
 
     /**
@@ -210,86 +289,45 @@ public class SettingsActivity extends Activity implements
         if (mUser != null) {
             mNameTextView.setText(mUser.getName());
             mEmailTextView.setText(mUser.getEmail());
-            mPairingIdTextView.setText(mUser.getPairingId());
             findViewById(R.id.sign_in_button).setVisibility(View.GONE);
             findViewById(R.id.sign_out_and_disconnect).setVisibility(View.VISIBLE);
-            if (mUser.isPaired()) {
-                findViewById(R.id.pair_button).setVisibility(View.GONE);
-                findViewById(R.id.unpair_button).setVisibility(View.VISIBLE);
-                findViewById(R.id.pair_instructions).setVisibility(View.GONE);
-            } else if (mPairingId != null) {
-                mPairingIdTextView.setText(mPairingId);
-                findViewById(R.id.pair_button).setVisibility(View.GONE);
-                findViewById(R.id.unpair_button).setVisibility(View.GONE);
-                findViewById(R.id.pair_instructions).setVisibility(View.VISIBLE);
-            } else {
-                findViewById(R.id.pair_button).setVisibility(View.VISIBLE);
-                findViewById(R.id.unpair_button).setVisibility(View.GONE);
-                findViewById(R.id.pair_instructions).setVisibility(View.GONE);
-            }
         } else {
             mNameTextView.setText(null);
             mEmailTextView.setText(null);
-            mPairingIdTextView.setText(null);
+            mPairIdTextView.setText(null);
             findViewById(R.id.sign_in_button).setVisibility(View.VISIBLE);
             findViewById(R.id.sign_out_and_disconnect).setVisibility(View.GONE);
             findViewById(R.id.pair_button).setVisibility(View.GONE);
             findViewById(R.id.unpair_button).setVisibility(View.GONE);
             findViewById(R.id.pair_instructions).setVisibility(View.GONE);
+            return;
         }
-    }
-
-    @Override
-    public void onClick(View v) {
-        int i = v.getId();
-        if (i == R.id.sign_in_button) {
-            signIn();
-        } else if (i == R.id.sign_out_button) {
-            signOut();
-        } else if (i == R.id.disconnect_button) {
-            revokeAccess();
-        } else if (i == R.id.pair_button) {
-            pair();
-        } else if (i == R.id.unpair_button) {
-            // TODO Removing pairing
+        if (mPair == null) {
+            findViewById(R.id.pair_button).setVisibility(View.VISIBLE);
+            findViewById(R.id.unpair_button).setVisibility(View.GONE);
+            findViewById(R.id.pair_instructions).setVisibility(View.GONE);
+        } else if (mPair.isComplete()) {
+            findViewById(R.id.pair_button).setVisibility(View.GONE);
+            findViewById(R.id.unpair_button).setVisibility(View.VISIBLE);
+            findViewById(R.id.pair_instructions).setVisibility(View.GONE);
+        } else {
+            mPairIdTextView.setText(mPair.getId());
+            findViewById(R.id.pair_button).setVisibility(View.GONE);
+            findViewById(R.id.unpair_button).setVisibility(View.GONE);
+            findViewById(R.id.pair_instructions).setVisibility(View.VISIBLE);
         }
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (mAuth.getCurrentUser() != null) {
-            mUser = new User(mAuth.getCurrentUser());
-        }
-        updateUI();
-        // Check to see that the Activity started due to an Android Beam
-        if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(getIntent().getAction())) {
-            processIntent(getIntent());
-        }
-    }
-
-    @Override
-    public void onNewIntent(Intent intent) {
-        // onResume gets called after this to handle the intent
-        setIntent(intent);
     }
 
     /**
-     * Parses the NDEF Message from the intent and prints to the TextView
+     * Process the received beam and update pair with user details
+     * @param intent Intent with beam data
      */
-    void processIntent(Intent intent) {
+    void processPairIntent(Intent intent) {
         Parcelable[] rawMsgs = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
-        // only one message sent during the beam
         NdefMessage msg = (NdefMessage) rawMsgs[0];
-        // record 0 contains the MIME type, record 1 is the AAR, if present
-        mPairingId = new String(msg.getRecords()[0].getPayload());
-        if (mUser != null) {
-            mUser.setPairingId(mPairingId);
-            //TODO save user to database
-            updateUI();
-        } else {
-            Toast.makeText(this, "Please sign in before pairing", Toast.LENGTH_LONG).show();
-        }
+        mPair = new Pair(mUser, msg);
+        updateUI();
+        loadPair(mPair.getId());
     }
 
 }

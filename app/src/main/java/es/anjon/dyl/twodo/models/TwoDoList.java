@@ -4,6 +4,7 @@ import java.util.Map;
 
 public class TwoDoList {
 
+    public static final String COLLECTION_NAME = "lists";
     String id;
     String title;
     Map<String, Boolean> items;
