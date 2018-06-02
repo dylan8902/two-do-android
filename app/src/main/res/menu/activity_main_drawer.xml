@@ -22,15 +22,10 @@
         android:orderInCategory="2">
         <menu>
             <item
-                android:id="@+id/nav_account"
+                android:id="@+id/nav_settings"
                 android:orderInCategory="2"
                 android:icon="@drawable/ic_menu_manage"
                 android:title="Settings" />
-            <item
-                android:id="@+id/nav_pair"
-                android:orderInCategory="2"
-                android:icon="@drawable/ic_menu_send"
-                android:title="Pair" />
         </menu>
     </item>
 

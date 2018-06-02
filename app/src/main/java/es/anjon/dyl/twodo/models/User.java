@@ -13,7 +13,7 @@ public class User {
         this.uuid = fbUser.getUid();
         this.name = fbUser.getDisplayName();
         this.email = fbUser.getEmail();
-        this.pairingId = "testpair1";
+        this.pairingId = null;
     }
 
     public String getUuid() {
@@ -32,8 +32,20 @@ public class User {
         return pairingId;
     }
 
+    public void setPairingId(String pairingId) {
+        this.pairingId = pairingId;
+    }
+
+    public boolean isPaired() {
+        return (getPairingId() != null);
+    }
+
     public String getListsCollectionPath() {
-        return "pairs/" + getPairingId() + "/lists";
+        if (isPaired()) {
+            return null;
+        } else {
+            return "pairs/" + getPairingId() + "/lists";
+        }
     }
 
 }
