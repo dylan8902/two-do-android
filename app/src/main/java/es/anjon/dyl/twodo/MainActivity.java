@@ -127,7 +127,8 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.nav_new_list) {
             // New TwoDoList
         } else if (id == R.id.nav_pair) {
-            // Start pair Activity
+            Intent intent = new Intent(this, PairActivity.class);
+            startActivity(intent);
         } else if (id == R.id.nav_account) {
             Intent intent = new Intent(this, GoogleSignInActivity.class);
             startActivity(intent);
