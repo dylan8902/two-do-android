@@ -3,19 +3,23 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:showIn="navigation_view">
 
-    <item android:id="@+id/lists"
+    <item
+        android:id="@+id/nav_new_list"
+        android:orderInCategory="0"
+        android:icon="@drawable/ic_menu_camera"
+        android:title="Create new list" />
+
+    <item
+        android:id="@+id/lists"
+        android:orderInCategory="1"
         android:title="Lists"
         android:checkableBehavior="single">
-        <menu>
-            <item
-                android:id="@+id/nav_new_list"
-                android:orderInCategory="0"
-                android:icon="@drawable/ic_menu_camera"
-                android:title="Create new twoDoList" />
-        </menu>
+        <menu></menu>
     </item>
 
-    <item android:title="Account">
+    <item
+        android:title="Account"
+        android:orderInCategory="2">
         <menu>
             <item
                 android:id="@+id/nav_account"

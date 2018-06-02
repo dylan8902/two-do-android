@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity
 
         mNavigationView = (NavigationView) findViewById(R.id.nav_view);
         mNavigationView.setNavigationItemSelectedListener(this);
-        mListMenu = mNavigationView.getMenu().getItem(0).getSubMenu();
+        mListMenu = mNavigationView.getMenu().findItem(R.id.lists).getSubMenu();
 
         mDb = FirebaseFirestore.getInstance();
         FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder()
