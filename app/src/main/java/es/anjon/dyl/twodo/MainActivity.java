@@ -2,28 +2,29 @@ package es.anjon.dyl.twodo;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
 import android.widget.TextView;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentChange;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.FirebaseFirestoreSettings;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,10 +35,12 @@ import es.anjon.dyl.twodo.models.User;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
+    private static final String TAG = "MainActivity";
     private FirebaseAuth mAuth;
     private User mUser;
     private FloatingActionButton mFab;
     private NavigationView mNavigationView;
+    private FirebaseFirestore mDb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,13 +65,12 @@ public class MainActivity extends AppCompatActivity
 
         mNavigationView = (NavigationView) findViewById(R.id.nav_view);
         mNavigationView.setNavigationItemSelectedListener(this);
-        SubMenu menu = mNavigationView.getMenu().getItem(0).getSubMenu();
-        menu.add(Menu.NONE, 1, 1, "Item1").setCheckable(true);
-        menu.add(Menu.NONE, 2, 1, "Item2").setCheckable(true);
-        menu.add(Menu.NONE, 3, 1, "Item3").setCheckable(true);
-        menu.add(Menu.NONE, 4, 1, "Item4").setCheckable(true);
-        menu.add(Menu.NONE, 5, 1, "Item5").setCheckable(true);
-        menu.add(Menu.NONE, 6, 1, "Item6").setCheckable(true);
+
+        mDb = FirebaseFirestore.getInstance();
+        FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder()
+                .setTimestampsInSnapshotsEnabled(true)
+                .build();
+        mDb.setFirestoreSettings(settings);
     }
 
     @Override
@@ -143,48 +145,53 @@ public class MainActivity extends AppCompatActivity
         Map<String, Boolean> items = new HashMap<>();
         items.put("Do the shopping", Boolean.FALSE);
         List list = new List("Test List", items);
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder()
-                .setTimestampsInSnapshotsEnabled(true)
-                .build();
-        db.setFirestoreSettings(settings);
-        db.collection("pairs")
-                .document(mUser.getPairingId())
-                .collection("lists")
-                .add(list)
-                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                    @Override
-                    public void onSuccess(DocumentReference documentReference) {
-                        Snackbar.make(getCurrentFocus(),
-                                    "DocumentSnapshot added with ID: " + documentReference.getId(),
-                                    Snackbar.LENGTH_LONG)
-                                .setAction("Action", null)
-                                .show();
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Snackbar.make(getCurrentFocus(),
-                                "Error adding document: " + e.getMessage(),
-                                Snackbar.LENGTH_LONG)
-                                .setAction("Action", null)
-                                .show();
-                    }
-                });
+        mDb.collection(mUser.getListsCollectionPath()).add(list);
     }
 
     /**
      * Based on the state of the user, update the navigation UI and handlers
      */
     private void updateUI() {
-        if(mUser != null) {
-            View header = mNavigationView.getHeaderView(0);
-            TextView nameView = (TextView) header.findViewById(R.id.name);
-            nameView.setText(mUser.getName());
-            TextView emailView = (TextView) header.findViewById(R.id.email);
-            emailView.setText(mUser.getEmail());
+        if (mUser == null) {
+            return;
         }
+
+        View header = mNavigationView.getHeaderView(0);
+        TextView nameView = (TextView) header.findViewById(R.id.name);
+        nameView.setText(mUser.getName());
+        TextView emailView = (TextView) header.findViewById(R.id.email);
+        emailView.setText(mUser.getEmail());
+
+        final SubMenu menu = mNavigationView.getMenu().getItem(0).getSubMenu();
+
+        mDb.collection(mUser.getListsCollectionPath())
+                .addSnapshotListener(new EventListener<QuerySnapshot>() {
+                    @Override
+                    public void onEvent(@Nullable QuerySnapshot snapshots,
+                                        @Nullable FirebaseFirestoreException e) {
+                        if (e != null) {
+                            Log.w(TAG, "listen:error", e);
+                            return;
+                        }
+
+                        for (DocumentChange dc : snapshots.getDocumentChanges()) {
+                            switch (dc.getType()) {
+                                case ADDED:
+                                    List list = dc.getDocument().toObject(List.class);
+                                    list.setId(dc.getDocument().getId());
+                                    Log.d(TAG, "New list: " + list);
+                                    menu.add(Menu.NONE, 1, 1, list.getTitle()).setCheckable(true);
+                                    break;
+                                case MODIFIED:
+                                    Log.d(TAG, "Modified list: " + dc.getDocument().getData());
+                                    break;
+                                case REMOVED:
+                                    Log.d(TAG, "Removed list: " + dc.getDocument().getData());
+                                    break;
+                            }
+                        }
+                    }
+                });
     }
 
 }

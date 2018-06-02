@@ -32,4 +32,8 @@ public class User {
         return pairingId;
     }
 
+    public String getListsCollectionPath() {
+        return "pairs/" + getPairingId() + "/lists";
+    }
+
 }
