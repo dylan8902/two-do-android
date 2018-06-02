@@ -168,6 +168,7 @@ public class SettingsActivity extends Activity implements
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         mUser = null;
+                        mPairingId = null;
                         updateUI();
                     }
                 });
@@ -186,6 +187,7 @@ public class SettingsActivity extends Activity implements
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         mUser = null;
+                        mPairingId = null;
                         updateUI();
                     }
                 });
