@@ -70,15 +70,12 @@ public class MainActivity extends AppCompatActivity
     public void onResume() {
         super.onResume();
 
-        // Login if required
-        if (mUser == null) {
-            FirebaseUser fbUser = FirebaseAuth.getInstance().getCurrentUser();
-            if (fbUser == null) {
-                startActivity(new Intent(this, SettingsActivity.class));
-            } else {
-                mUser = new User(fbUser);
-                updateUI();
-            }
+        FirebaseUser fbUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (fbUser == null) {
+            startActivity(new Intent(this, SettingsActivity.class));
+        } else {
+            mUser = new User(fbUser);
+            updateUI();
         }
     }
 
