@@ -46,4 +46,19 @@ public class TwoDoList {
         return title;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        TwoDoList twoDoList = (TwoDoList) o;
+
+        return getId().equals(twoDoList.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getId().hashCode();
+    }
+
 }

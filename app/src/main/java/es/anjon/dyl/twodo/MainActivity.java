@@ -40,6 +40,7 @@ public class MainActivity extends AppCompatActivity
     private User mUser;
     private FloatingActionButton mFab;
     private NavigationView mNavigationView;
+    private SubMenu mListMenu;
     private FirebaseFirestore mDb;
 
     @Override
@@ -65,6 +66,7 @@ public class MainActivity extends AppCompatActivity
 
         mNavigationView = (NavigationView) findViewById(R.id.nav_view);
         mNavigationView.setNavigationItemSelectedListener(this);
+        mListMenu = mNavigationView.getMenu().getItem(0).getSubMenu();
 
         mDb = FirebaseFirestore.getInstance();
         FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder()
@@ -162,8 +164,6 @@ public class MainActivity extends AppCompatActivity
         TextView emailView = (TextView) header.findViewById(R.id.email);
         emailView.setText(mUser.getEmail());
 
-        final SubMenu menu = mNavigationView.getMenu().getItem(0).getSubMenu();
-
         mDb.collection(mUser.getListsCollectionPath())
                 .addSnapshotListener(new EventListener<QuerySnapshot>() {
                     @Override
@@ -175,18 +175,21 @@ public class MainActivity extends AppCompatActivity
                         }
 
                         for (DocumentChange dc : snapshots.getDocumentChanges()) {
+                            TwoDoList twoDoList = dc.getDocument().toObject(TwoDoList.class);
+                            twoDoList.setId(dc.getDocument().getId());
                             switch (dc.getType()) {
                                 case ADDED:
-                                    TwoDoList twoDoList = dc.getDocument().toObject(TwoDoList.class);
-                                    twoDoList.setId(dc.getDocument().getId());
                                     Log.d(TAG, "New twoDoList: " + twoDoList);
-                                    menu.add(Menu.NONE, 1, 1, twoDoList.getTitle()).setCheckable(true);
+                                    mListMenu.add(Menu.NONE, twoDoList.hashCode(), 1, twoDoList.getTitle())
+                                            .setCheckable(true);
                                     break;
                                 case MODIFIED:
                                     Log.d(TAG, "Modified twoDoList: " + dc.getDocument().getData());
+                                    mListMenu.findItem(twoDoList.hashCode()).setTitle(twoDoList.getTitle());
                                     break;
                                 case REMOVED:
                                     Log.d(TAG, "Removed twoDoList: " + dc.getDocument().getData());
+                                    mListMenu.removeItem(twoDoList.hashCode());
                                     break;
                             }
                         }
