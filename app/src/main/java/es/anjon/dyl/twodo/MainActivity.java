@@ -13,6 +13,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SubMenu;
 import android.view.View;
 import android.widget.TextView;
 
@@ -61,6 +62,13 @@ public class MainActivity extends AppCompatActivity
 
         mNavigationView = (NavigationView) findViewById(R.id.nav_view);
         mNavigationView.setNavigationItemSelectedListener(this);
+        SubMenu menu = mNavigationView.getMenu().getItem(0).getSubMenu();
+        menu.add(Menu.NONE, 1, 1, "Item1").setCheckable(true);
+        menu.add(Menu.NONE, 2, 1, "Item2").setCheckable(true);
+        menu.add(Menu.NONE, 3, 1, "Item3").setCheckable(true);
+        menu.add(Menu.NONE, 4, 1, "Item4").setCheckable(true);
+        menu.add(Menu.NONE, 5, 1, "Item5").setCheckable(true);
+        menu.add(Menu.NONE, 6, 1, "Item6").setCheckable(true);
     }
 
     @Override
@@ -108,24 +116,19 @@ public class MainActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
-
-        } else if (id == R.id.nav_gallery) {
-
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
-
+        if (id == R.id.nav_new_list) {
+            // New List
+        } else if (id == R.id.nav_pair) {
+            // Start pair Activity
+        } else if (id == R.id.nav_account) {
+            Intent intent = new Intent(this, GoogleSignInActivity.class);
+            startActivity(intent);
+        } else {
+            // Setup listeners for list based on ID
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
