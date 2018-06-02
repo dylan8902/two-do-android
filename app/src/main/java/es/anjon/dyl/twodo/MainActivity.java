@@ -1,6 +1,8 @@
 package es.anjon.dyl.twodo;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -17,9 +19,12 @@ import android.view.SubMenu;
 import android.view.View;
 import android.widget.TextView;
 
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentChange;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
@@ -75,12 +80,13 @@ public class MainActivity extends AppCompatActivity
         FirebaseUser fbUser = FirebaseAuth.getInstance().getCurrentUser();
         if (fbUser == null) {
             startActivity(new Intent(this, SettingsActivity.class));
-        } else {
-            mUser = new User(fbUser);
-            updateUserUI();
+            return;
         }
+        mUser = new User(fbUser);
+        updateUserUI();
 
-
+        SharedPreferences sharedPrefs = getSharedPreferences(Pair.SHARED_PREFS_KEY, Context.MODE_PRIVATE);
+        loadPair(sharedPrefs.getString(Pair.SHARED_PREFS_KEY, null));
     }
 
     @Override
@@ -203,6 +209,26 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View view) {
                 //addList();
+            }
+        });
+    }
+
+    /**
+     * Load the pair details from the database
+     * @param pairId database key
+     */
+    private void loadPair(String pairId) {
+        if (pairId == null) {
+            return;
+        }
+        //TODO add spinner while the pair details load?
+        DocumentReference docRef = mDb.collection(Pair.COLLECTION_NAME).document(pairId);
+        docRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+            @Override
+            public void onSuccess(DocumentSnapshot doc) {
+                mPair = doc.toObject(Pair.class);
+                mPair.setId(doc.getId());
+                updatePairUI();
             }
         });
     }

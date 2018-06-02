@@ -20,13 +20,8 @@ public class Pair {
 
     }
 
-    public Pair(User to, NdefMessage msg) {
+    public Pair(NdefMessage msg) {
         this.id = new String(msg.getRecords()[0].getPayload());
-        this.to = to;
-    }
-
-    public Pair(User from) {
-        this.from = from;
     }
 
     public String getId() {
@@ -63,12 +58,22 @@ public class Pair {
 
     @Exclude
     public String getListsCollectionPath() {
-        return COLLECTION_NAME + "/" + getId() + TwoDoList.COLLECTION_NAME;
+        return COLLECTION_NAME + "/" + getId() + "/" + TwoDoList.COLLECTION_NAME;
     }
 
     @Exclude
     public boolean isComplete() {
         return ((getTo() != null) && (getFrom() != null));
+    }
+
+    @Exclude
+    public User getWith(User user) {
+        if (user.equals(to)) {
+            return from;
+        } else if (user.equals(from)) {
+            return to;
+        }
+        return null;
     }
 
 }

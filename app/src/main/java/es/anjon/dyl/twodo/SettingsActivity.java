@@ -48,6 +48,7 @@ public class SettingsActivity extends Activity implements
     private TextView mNameTextView;
     private TextView mEmailTextView;
     private TextView mPairIdTextView;
+    private TextView mPairNameTextView;
     private NfcAdapter mNfcAdapter;
     private Pair mPair;
     private User mUser;
@@ -63,6 +64,7 @@ public class SettingsActivity extends Activity implements
         mNameTextView = findViewById(R.id.name);
         mEmailTextView = findViewById(R.id.email);
         mPairIdTextView = findViewById(R.id.pair_id);
+        mPairNameTextView = findViewById(R.id.pair_name);
 
         findViewById(R.id.sign_in_button).setOnClickListener(this);
         findViewById(R.id.sign_out_button).setOnClickListener(this);
@@ -209,9 +211,7 @@ public class SettingsActivity extends Activity implements
                 new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
-                        mUser = null;
-                        mPair = null;
-                        updateUI();
+                        destroy();
                     }
                 });
     }
@@ -228,9 +228,7 @@ public class SettingsActivity extends Activity implements
                 new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
-                        mUser = null;
-                        mPair = null;
-                        updateUI();
+                        destroy();
                     }
                 });
     }
@@ -240,7 +238,8 @@ public class SettingsActivity extends Activity implements
      * Add a listener for document to wait for pairing complete
      */
     private void pair() {
-        mPair = new Pair(mUser);
+        mPair = new Pair();
+        mPair.setFrom(mUser);
         mDb.collection(Pair.COLLECTION_NAME).add(mPair)
                 .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
                     @Override
@@ -283,7 +282,41 @@ public class SettingsActivity extends Activity implements
     }
 
     /**
-     * Update UI with user information
+     * Process the received beam get pair details and update
+     * @param intent Intent with beam data
+     */
+    void processPairIntent(Intent intent) {
+        Parcelable[] rawMsgs = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
+        NdefMessage msg = (NdefMessage) rawMsgs[0];
+        mPair = new Pair(msg);
+        mPair.setTo(mUser);
+        mSharedPrefs.edit().putString(Pair.SHARED_PREFS_KEY, mPair.getId()).apply();
+        updateUI();
+        DocumentReference docRef = mDb.collection(Pair.COLLECTION_NAME).document(mPair.getId());
+        docRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+            @Override
+            public void onSuccess(DocumentSnapshot doc) {
+                Pair pair = doc.toObject(Pair.class);
+                mPair.setFrom(pair.getFrom());
+                mDb.collection(Pair.COLLECTION_NAME).document(mPair.getId()).set(mPair);
+                updateUI();
+            }
+        });
+    }
+
+    /**
+     * Destroy all user data and refresh the UI
+     */
+    private void destroy() {
+        mPair = null;
+        mUser = null;
+        mSharedPrefs.edit().remove(Pair.SHARED_PREFS_KEY).apply();
+        updateUI();
+        return;
+    }
+
+    /**
+     * Update UI with user and pair information
      */
     private void updateUI() {
         if (mUser != null) {
@@ -306,28 +339,18 @@ public class SettingsActivity extends Activity implements
             findViewById(R.id.pair_button).setVisibility(View.VISIBLE);
             findViewById(R.id.unpair_button).setVisibility(View.GONE);
             findViewById(R.id.pair_instructions).setVisibility(View.GONE);
+            mPairNameTextView.setText(null);
         } else if (mPair.isComplete()) {
             findViewById(R.id.pair_button).setVisibility(View.GONE);
             findViewById(R.id.unpair_button).setVisibility(View.VISIBLE);
             findViewById(R.id.pair_instructions).setVisibility(View.GONE);
+            mPairNameTextView.setText(mPair.getWith(mUser).getName());
         } else {
             mPairIdTextView.setText(mPair.getId());
             findViewById(R.id.pair_button).setVisibility(View.GONE);
             findViewById(R.id.unpair_button).setVisibility(View.GONE);
             findViewById(R.id.pair_instructions).setVisibility(View.VISIBLE);
         }
-    }
-
-    /**
-     * Process the received beam and update pair with user details
-     * @param intent Intent with beam data
-     */
-    void processPairIntent(Intent intent) {
-        Parcelable[] rawMsgs = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
-        NdefMessage msg = (NdefMessage) rawMsgs[0];
-        mPair = new Pair(mUser, msg);
-        updateUI();
-        loadPair(mPair.getId());
     }
 
 }
