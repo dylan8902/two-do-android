@@ -29,7 +29,7 @@ import com.google.firebase.firestore.QuerySnapshot;
 import java.util.HashMap;
 import java.util.Map;
 
-import es.anjon.dyl.twodo.models.List;
+import es.anjon.dyl.twodo.models.TwoDoList;
 import es.anjon.dyl.twodo.models.User;
 
 public class MainActivity extends AppCompatActivity
@@ -123,7 +123,7 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_new_list) {
-            // New List
+            // New TwoDoList
         } else if (id == R.id.nav_pair) {
             // Start pair Activity
         } else if (id == R.id.nav_account) {
@@ -144,8 +144,8 @@ public class MainActivity extends AppCompatActivity
     private void addList() {
         Map<String, Boolean> items = new HashMap<>();
         items.put("Do the shopping", Boolean.FALSE);
-        List list = new List("Test List", items);
-        mDb.collection(mUser.getListsCollectionPath()).add(list);
+        TwoDoList twoDoList = new TwoDoList("Test TwoDoList", items);
+        mDb.collection(mUser.getListsCollectionPath()).add(twoDoList);
     }
 
     /**
@@ -177,16 +177,16 @@ public class MainActivity extends AppCompatActivity
                         for (DocumentChange dc : snapshots.getDocumentChanges()) {
                             switch (dc.getType()) {
                                 case ADDED:
-                                    List list = dc.getDocument().toObject(List.class);
-                                    list.setId(dc.getDocument().getId());
-                                    Log.d(TAG, "New list: " + list);
-                                    menu.add(Menu.NONE, 1, 1, list.getTitle()).setCheckable(true);
+                                    TwoDoList twoDoList = dc.getDocument().toObject(TwoDoList.class);
+                                    twoDoList.setId(dc.getDocument().getId());
+                                    Log.d(TAG, "New twoDoList: " + twoDoList);
+                                    menu.add(Menu.NONE, 1, 1, twoDoList.getTitle()).setCheckable(true);
                                     break;
                                 case MODIFIED:
-                                    Log.d(TAG, "Modified list: " + dc.getDocument().getData());
+                                    Log.d(TAG, "Modified twoDoList: " + dc.getDocument().getData());
                                     break;
                                 case REMOVED:
-                                    Log.d(TAG, "Removed list: " + dc.getDocument().getData());
+                                    Log.d(TAG, "Removed twoDoList: " + dc.getDocument().getData());
                                     break;
                             }
                         }

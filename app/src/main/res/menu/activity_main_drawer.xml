@@ -11,7 +11,7 @@
                 android:id="@+id/nav_new_list"
                 android:orderInCategory="0"
                 android:icon="@drawable/ic_menu_camera"
-                android:title="Create new list" />
+                android:title="Create new twoDoList" />
         </menu>
     </item>
 

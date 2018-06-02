@@ -2,17 +2,17 @@ package es.anjon.dyl.twodo.models;
 
 import java.util.Map;
 
-public class List {
+public class TwoDoList {
 
     String id;
     String title;
     Map<String, Boolean> items;
 
-    public List() {
+    public TwoDoList() {
 
     }
 
-    public List(String title, Map<String,Boolean> items) {
+    public TwoDoList(String title, Map<String,Boolean> items) {
         this.title = title;
         this.items = items;
     }
