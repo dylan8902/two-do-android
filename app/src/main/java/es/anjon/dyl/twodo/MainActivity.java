@@ -145,7 +145,9 @@ public class MainActivity extends AppCompatActivity
                 .setTimestampsInSnapshotsEnabled(true)
                 .build();
         db.setFirestoreSettings(settings);
-        db.collection("pairs." + mUser.getPairingId())
+        db.collection("pairs")
+                .document(mUser.getPairingId())
+                .collection("lists")
                 .add(list)
                 .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
                     @Override
