@@ -309,7 +309,7 @@ public class SettingsActivity extends Activity implements
     }
 
     /**
-     * Process the received beam get pair details and update UI
+     * Process the received beam and update pair details with user and update UI
      * @param intent Intent with beam data
      */
     void processPairIntent(Intent intent) {
