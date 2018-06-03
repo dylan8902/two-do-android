@@ -24,6 +24,7 @@ import android.widget.TextView;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -31,6 +32,7 @@ import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.FirebaseFirestoreSettings;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
@@ -55,6 +57,8 @@ public class MainActivity extends AppCompatActivity
     private RecyclerView mListView;
     private ListAdapter mListAdapter;
     private List<ListItem> mListItems;
+    private List<String> mListItemKeys;
+    private ListenerRegistration mListItemsListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,6 +78,7 @@ public class MainActivity extends AppCompatActivity
         mListView = (RecyclerView) findViewById(R.id.list);
         mListView.hasFixedSize();
         mListItems = new ArrayList<>();
+        mListItemKeys = new ArrayList<>();
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         mListView.setLayoutManager(layoutManager);
         mListAdapter = new ListAdapter(mListItems);
@@ -155,8 +160,6 @@ public class MainActivity extends AppCompatActivity
      */
     private void addList() {
         TwoDoList twoDoList = new TwoDoList("Test TwoDoList");
-        twoDoList.addItem(new ListItem("Item 1", Boolean.FALSE));
-        twoDoList.addItem(new ListItem("Item 2", Boolean.FALSE));
         mDb.collection(mPair.getListsCollectionPath()).add(twoDoList);
     }
 
@@ -242,7 +245,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
-     * Load the list details from the database
+     * Load the list details from the database and add listeners
      * @param listId database key
      */
     private void loadList(String listId) {
@@ -250,16 +253,67 @@ public class MainActivity extends AppCompatActivity
             return;
         }
         //TODO add spinner while the list details load?
-        DocumentReference docRef = mDb.collection(mPair.getListsCollectionPath()).document(listId);
-        docRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+        mListItems.clear();
+        mListItemKeys.clear();
+        mListAdapter.notifyDataSetChanged();
+        if (mListItemsListener != null) {
+            mListItemsListener.remove();
+        }
+        final CollectionReference ref = mDb.collection(mPair.getListsCollectionPath())
+                .document(listId).collection("items");
+        mListItemsListener = ref.addSnapshotListener(new EventListener<QuerySnapshot>() {
             @Override
-            public void onSuccess(DocumentSnapshot doc) {
-                mList = doc.toObject(TwoDoList.class);
-                mList.setId(doc.getId());
-                mListItems.clear();
-                mListItems.addAll(mList.getItems());
-                mListAdapter.notifyDataSetChanged();
-                //TODO addListListener();
+            public void onEvent(@Nullable QuerySnapshot snapshots,
+                                @Nullable FirebaseFirestoreException e) {
+                if (e != null) {
+                    Log.w(TAG, "listen:error", e);
+                    return;
+                }
+
+                for (DocumentChange dc : snapshots.getDocumentChanges()) {
+                    switch (dc.getType()) {
+                        case ADDED:
+                            Log.d(TAG, "New List Item: " + dc.getDocument().getData());
+                            ListItem added = dc.getDocument().toObject(ListItem.class);
+                            added.setId(dc.getDocument().getId());
+                            mListItems.add(added);
+                            mListItemKeys.add(added.getId());
+                            mListAdapter.notifyItemInserted(mListItems.size() - 1);
+                            break;
+                        case MODIFIED:
+                            Log.d(TAG, "Modified List Item: " + dc.getDocument().getData());
+                            ListItem modified = dc.getDocument().toObject(ListItem.class);
+                            modified.setId(dc.getDocument().getId());
+                            int index = mListItemKeys.indexOf(modified.getId());
+                            if (index > -1) {
+                                mListItems.set(index, modified);
+                                mListAdapter.notifyItemChanged(index);
+                            } else {
+                                Log.w(TAG, "Unknown list item :" + modified.getId());
+                            }
+                            break;
+                        case REMOVED:
+                            Log.d(TAG, "Removed List Item: " + dc.getDocument().getData());
+                            ListItem removed = dc.getDocument().toObject(ListItem.class);
+                            removed.setId(dc.getDocument().getId());
+                            int itemIndex = mListItemKeys.indexOf(removed.getId());
+                            if (itemIndex > -1) {
+                                mListItemKeys.remove(itemIndex);
+                                mListItems.remove(itemIndex);
+                                mListAdapter.notifyItemRemoved(itemIndex);
+                            } else {
+                                Log.w(TAG, "Unknown list item :" + removed.getId());
+                            }
+                            break;
+                    }
+                }
+
+            }
+        });
+        mFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ref.add(new ListItem("New Item", Boolean.FALSE));
             }
         });
     }
