@@ -44,6 +44,7 @@ public class MainActivity extends AppCompatActivity
     private static final String TAG = "MainActivity";
     private User mUser;
     private Pair mPair;
+    private TwoDoList mList;
     private FloatingActionButton mFab;
     private NavigationView mNavigationView;
     private SubMenu mListMenu;
@@ -123,11 +124,12 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_new_list) {
-            // New list
+            addList();
         } else if (id == R.id.nav_settings) {
             startActivity(new Intent(this, SettingsActivity.class));
         } else {
             // Update main content
+            loadList(item.getTitle().toString());
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -168,9 +170,9 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
-     * When the pair is available, update the lists
+     * When the pair is available, add listener to update the lists
      */
-    private void updatePairUI() {
+    private void addListsListener() {
         if (mPair == null) {
             return;
         }
@@ -189,12 +191,12 @@ public class MainActivity extends AppCompatActivity
                     switch (dc.getType()) {
                         case ADDED:
                             Log.d(TAG, "New twoDoList: " + twoDoList);
-                            mListMenu.add(Menu.NONE, twoDoList.hashCode(), 1, twoDoList.getTitle())
+                            mListMenu.add(Menu.NONE, twoDoList.hashCode(), 1, twoDoList.getId())
                                     .setCheckable(true);
                             break;
                         case MODIFIED:
                             Log.d(TAG, "Modified twoDoList: " + dc.getDocument().getData());
-                            mListMenu.findItem(twoDoList.hashCode()).setTitle(twoDoList.getTitle());
+                            mListMenu.findItem(twoDoList.hashCode()).setTitle(twoDoList.getId());
                             break;
                         case REMOVED:
                             Log.d(TAG, "Removed twoDoList: " + dc.getDocument().getData());
@@ -202,13 +204,6 @@ public class MainActivity extends AppCompatActivity
                             break;
                     }
                 }
-            }
-        });
-
-        mFab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //addList();
             }
         });
     }
@@ -228,7 +223,29 @@ public class MainActivity extends AppCompatActivity
             public void onSuccess(DocumentSnapshot doc) {
                 mPair = doc.toObject(Pair.class);
                 mPair.setId(doc.getId());
-                updatePairUI();
+                addListsListener();
+            }
+        });
+    }
+
+    /**
+     * Load the list details from the database
+     * @param listId database key
+     */
+    private void loadList(String listId) {
+        if ((listId == null) || (mPair == null)) {
+            return;
+        }
+        //TODO add spinner while the list details load?
+        DocumentReference docRef = mDb.collection(mPair.getListsCollectionPath()).document(listId);
+        docRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+            @Override
+            public void onSuccess(DocumentSnapshot doc) {
+                mList = doc.toObject(TwoDoList.class);
+                mList.setId(doc.getId());
+                TextView main = (TextView) findViewById(R.id.content_main);
+                main.setText(String.format("%s %s %s", mList.toString(), mList.getId(), mList.getItems()));
+                //TODO addListListener();
             }
         });
     }
