@@ -54,6 +54,10 @@ public class SettingsActivity extends Activity implements
     private User mUser;
     private SharedPreferences mSharedPrefs;
 
+    /**
+     * Find views and setup button handlers. Check if NFC, close if not
+     * @param savedInstanceState the previous saved state
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -90,6 +94,9 @@ public class SettingsActivity extends Activity implements
         }
     }
 
+    /**
+     * Load user and pair and update UI
+     */
     @Override
     public void onStart() {
         super.onStart();
@@ -100,6 +107,12 @@ public class SettingsActivity extends Activity implements
         updateUI();
     }
 
+    /**
+     * Complete authentication if the Google Sign In is complete
+     * @param requestCode the code to check to see if it is google's results
+     * @param resultCode the code from the activity
+     * @param data the data provied from the activity
+     */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -129,6 +142,10 @@ public class SettingsActivity extends Activity implements
         return mPair.createNfcMessage();
     }
 
+    /**
+     * Button click handlers
+     * @param v the view clicked
+     */
     @Override
     public void onClick(View v) {
         int i = v.getId();
@@ -145,6 +162,9 @@ public class SettingsActivity extends Activity implements
         }
     }
 
+    /**
+     * Reload the user if there is one, if resumed due to pairing intent, process
+     */
     @Override
     public void onResume() {
         super.onResume();
@@ -165,7 +185,7 @@ public class SettingsActivity extends Activity implements
     }
 
     /**
-     * Complete authentication with Google Account
+     * Complete authentication with Google Account and update UI
      * @param acct Google Account
      */
     private void firebaseAuthWithGoogle(GoogleSignInAccount acct) {
@@ -234,7 +254,7 @@ public class SettingsActivity extends Activity implements
     }
 
     /**
-     * Generate the pairing id (firebase uid)
+     * Generate the pairing id (firebase uid) and update UI
      * Add a listener for document to wait for pairing complete
      */
     private void pair() {
@@ -259,14 +279,16 @@ public class SettingsActivity extends Activity implements
                         Log.e(TAG, "Error adding document", e);
                     }
                 });
+        updateUI();
     }
 
     /**
-     * Load the pair details from the database
+     * Load the pair details from the database and update UI
      * @param pairId database key
      */
     private void loadPair(String pairId) {
         if (pairId == null) {
+            updateUI();
             return;
         }
         //TODO add spinner while the pair details load to prevent trying to pair again?
@@ -282,7 +304,7 @@ public class SettingsActivity extends Activity implements
     }
 
     /**
-     * Process the received beam get pair details and update
+     * Process the received beam get pair details and update UI
      * @param intent Intent with beam data
      */
     void processPairIntent(Intent intent) {
@@ -320,11 +342,13 @@ public class SettingsActivity extends Activity implements
      */
     private void updateUI() {
         if (mUser != null) {
+            // User is logged in
             mNameTextView.setText(mUser.getName());
             mEmailTextView.setText(mUser.getEmail());
             findViewById(R.id.sign_in_button).setVisibility(View.GONE);
             findViewById(R.id.sign_out_and_disconnect).setVisibility(View.VISIBLE);
         } else {
+            // User is not logged in
             mNameTextView.setText(null);
             mEmailTextView.setText(null);
             mPairIdTextView.setText(null);
@@ -336,16 +360,24 @@ public class SettingsActivity extends Activity implements
             return;
         }
         if (mPair == null) {
+            // No pairing underway
             findViewById(R.id.pair_button).setVisibility(View.VISIBLE);
             findViewById(R.id.unpair_button).setVisibility(View.GONE);
             findViewById(R.id.pair_instructions).setVisibility(View.GONE);
             mPairNameTextView.setText(null);
         } else if (mPair.isComplete()) {
+            // Pairing complete
             findViewById(R.id.pair_button).setVisibility(View.GONE);
             findViewById(R.id.unpair_button).setVisibility(View.VISIBLE);
             findViewById(R.id.pair_instructions).setVisibility(View.GONE);
             mPairNameTextView.setText(mPair.getWith(mUser).getName());
+        } else if (mPair.getId() == null) {
+            // Starting to pair
+            mPairIdTextView.setText("Generating Pairing ID");
+            findViewById(R.id.pair_button).setVisibility(View.GONE);
+            findViewById(R.id.unpair_button).setVisibility(View.GONE);
         } else {
+            // Waiting to pair
             mPairIdTextView.setText(mPair.getId());
             findViewById(R.id.pair_button).setVisibility(View.GONE);
             findViewById(R.id.unpair_button).setVisibility(View.GONE);
