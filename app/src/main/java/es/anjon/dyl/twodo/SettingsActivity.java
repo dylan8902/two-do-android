@@ -352,6 +352,7 @@ public class SettingsActivity extends Activity implements
             mNameTextView.setText(null);
             mEmailTextView.setText(null);
             mPairIdTextView.setText(null);
+            mPairNameTextView.setText(null);
             findViewById(R.id.sign_in_button).setVisibility(View.VISIBLE);
             findViewById(R.id.sign_out_and_disconnect).setVisibility(View.GONE);
             findViewById(R.id.pair_button).setVisibility(View.GONE);
