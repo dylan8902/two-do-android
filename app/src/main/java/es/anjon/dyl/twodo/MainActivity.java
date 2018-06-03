@@ -11,6 +11,8 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
@@ -31,9 +33,10 @@ import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.FirebaseFirestoreSettings;
 import com.google.firebase.firestore.QuerySnapshot;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
+import es.anjon.dyl.twodo.models.ListItem;
 import es.anjon.dyl.twodo.models.Pair;
 import es.anjon.dyl.twodo.models.TwoDoList;
 import es.anjon.dyl.twodo.models.User;
@@ -49,6 +52,9 @@ public class MainActivity extends AppCompatActivity
     private NavigationView mNavigationView;
     private SubMenu mListMenu;
     private FirebaseFirestore mDb;
+    private RecyclerView mListView;
+    private ListAdapter mListAdapter;
+    private List<ListItem> mListItems;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +71,13 @@ public class MainActivity extends AppCompatActivity
 
         mNavigationView = (NavigationView) findViewById(R.id.nav_view);
         mNavigationView.setNavigationItemSelectedListener(this);
+        mListView = (RecyclerView) findViewById(R.id.list);
+        mListView.hasFixedSize();
+        mListItems = new ArrayList<>();
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        mListView.setLayoutManager(layoutManager);
+        mListAdapter = new ListAdapter(mListItems);
+        mListView.setAdapter(mListAdapter);
         mListMenu = mNavigationView.getMenu().findItem(R.id.lists).getSubMenu();
         mFab = (FloatingActionButton) findViewById(R.id.fab);
         mDb = FirebaseFirestore.getInstance();
@@ -141,9 +154,9 @@ public class MainActivity extends AppCompatActivity
      * Add a test list to the pair collection
      */
     private void addList() {
-        Map<String, Boolean> items = new HashMap<>();
-        items.put("Do the shopping", Boolean.FALSE);
-        TwoDoList twoDoList = new TwoDoList("Test TwoDoList", items);
+        TwoDoList twoDoList = new TwoDoList("Test TwoDoList");
+        twoDoList.addItem(new ListItem("Item 1", Boolean.FALSE));
+        twoDoList.addItem(new ListItem("Item 2", Boolean.FALSE));
         mDb.collection(mPair.getListsCollectionPath()).add(twoDoList);
     }
 
@@ -243,8 +256,9 @@ public class MainActivity extends AppCompatActivity
             public void onSuccess(DocumentSnapshot doc) {
                 mList = doc.toObject(TwoDoList.class);
                 mList.setId(doc.getId());
-                TextView main = (TextView) findViewById(R.id.content_main);
-                main.setText(String.format("%s %s %s", mList.toString(), mList.getId(), mList.getItems()));
+                mListItems.clear();
+                mListItems.addAll(mList.getItems());
+                mListAdapter.notifyDataSetChanged();
                 //TODO addListListener();
             }
         });
