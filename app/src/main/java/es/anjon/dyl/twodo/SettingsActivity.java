@@ -10,6 +10,7 @@ import android.nfc.NfcEvent;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
 import android.view.View;
@@ -31,7 +32,10 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.ListenerRegistration;
 
 import es.anjon.dyl.twodo.models.Pair;
 import es.anjon.dyl.twodo.models.User;
@@ -53,6 +57,7 @@ public class SettingsActivity extends Activity implements
     private Pair mPair;
     private User mUser;
     private SharedPreferences mSharedPrefs;
+    private ListenerRegistration mPairListener;
 
     /**
      * Find views and setup button handlers. Check if NFC, close if not
@@ -269,7 +274,7 @@ public class SettingsActivity extends Activity implements
                         mNfcAdapter.setNdefPushMessageCallback(
                                 SettingsActivity.this, SettingsActivity.this);
                         mSharedPrefs.edit().putString(Pair.SHARED_PREFS_KEY, mPair.getId()).apply();
-                        //TODO add listener for pair change to get 'to' user details
+                        addPairingListener();
                         updateUI();
                     }
                 })
@@ -335,6 +340,30 @@ public class SettingsActivity extends Activity implements
         mSharedPrefs.edit().remove(Pair.SHARED_PREFS_KEY).apply();
         updateUI();
         return;
+    }
+
+    /**
+     * Add listener for pairing data and update UI
+     */
+    private void addPairingListener() {
+        mPairListener = mDb.document(mPair.getPath()).addSnapshotListener(new EventListener<DocumentSnapshot>() {
+            @Override
+            public void onEvent(@Nullable DocumentSnapshot snapshot,
+                                @Nullable FirebaseFirestoreException e) {
+                if (e != null) {
+                    Log.w(TAG, "listen:error", e);
+                    return;
+                }
+                if (snapshot != null && snapshot.exists()) {
+                    Log.d(TAG, "Current data: " + snapshot.getData());
+                    mPair = snapshot.toObject(Pair.class);
+                    mPair.setId(snapshot.getId());
+                    updateUI();
+                } else {
+                    Log.d(TAG, "Current data: null");
+                }
+            }
+        });
     }
 
     /**

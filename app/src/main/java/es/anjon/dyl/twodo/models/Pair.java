@@ -57,8 +57,13 @@ public class Pair {
     }
 
     @Exclude
+    public String getPath() {
+        return COLLECTION_NAME + "/" + getId();
+    }
+
+    @Exclude
     public String getListsCollectionPath() {
-        return COLLECTION_NAME + "/" + getId() + "/" + TwoDoList.COLLECTION_NAME;
+        return getPath() + "/" + TwoDoList.COLLECTION_NAME;
     }
 
     @Exclude
