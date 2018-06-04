@@ -58,6 +58,7 @@ public class MainActivity extends AppCompatActivity
     private ListAdapter mListAdapter;
     private List<ListItem> mListItems;
     private List<String> mListItemKeys;
+    private ListenerRegistration mListsListener;
     private ListenerRegistration mListItemsListener;
 
     @Override
@@ -155,10 +156,24 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+    @Override
+    public void onPause() {
+        if (mListsListener != null) {
+            mListsListener.remove();
+        }
+        if (mListItemsListener != null) {
+            mListItemsListener.remove();
+        }
+        super.onPause();
+    }
+
     /**
-     * Add a test list to the pair collection
+     * Add a list to the pair collection
      */
     private void addList() {
+        if (mPair == null) {
+            return;
+        }
         TwoDoList twoDoList = new TwoDoList("Test TwoDoList");
         mDb.collection(mPair.getListsCollectionPath()).add(twoDoList);
     }
@@ -192,7 +207,8 @@ public class MainActivity extends AppCompatActivity
         if (mPair == null) {
             return;
         }
-        mDb.collection(mPair.getListsCollectionPath()).addSnapshotListener(new EventListener<QuerySnapshot>() {
+        mListMenu.clear();
+        mListsListener = mDb.collection(mPair.getListsCollectionPath()).addSnapshotListener(new EventListener<QuerySnapshot>() {
             @Override
             public void onEvent(@Nullable QuerySnapshot snapshots,
                                 @Nullable FirebaseFirestoreException e) {
@@ -310,6 +326,7 @@ public class MainActivity extends AppCompatActivity
 
             }
         });
+        mFab.setVisibility(View.VISIBLE);
         mFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
