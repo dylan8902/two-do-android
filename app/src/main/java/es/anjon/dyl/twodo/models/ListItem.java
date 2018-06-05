@@ -1,5 +1,9 @@
 package es.anjon.dyl.twodo.models;
 
+import android.graphics.Color;
+
+import com.google.firebase.firestore.Exclude;
+
 public class ListItem {
 
     String id;
@@ -47,6 +51,23 @@ public class ListItem {
 
     public void setChecked(Boolean checked) {
         this.checked = checked;
+    }
+
+    @Exclude
+    public int getPrioirtyColour() {
+        if (getPrioirty() == null) {
+            return Color.TRANSPARENT;
+        }
+        switch (getPrioirty()) {
+            case "P1":
+                return Color.RED;
+            case "P2":
+                return Color.YELLOW;
+            case "P3":
+                return Color.BLUE;
+            default:
+                return Color.TRANSPARENT;
+        }
     }
 
 }

@@ -43,7 +43,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
     public void onBindViewHolder(ViewHolder holder, int position) {
         ListItem item = mListItems.get(position);
         holder.mTitleView.setText(item.getTitle());
-        holder.mPriorityView.setText(item.getPrioirty());
+        holder.mPriorityView.setBackgroundColor(item.getPrioirtyColour());
         holder.mCheckedView.setChecked(item.getChecked());
     }
 

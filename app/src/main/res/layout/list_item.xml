@@ -3,31 +3,32 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="horizontal"
-    android:padding="16sp">
+    android:orientation="horizontal">
 
     <CheckBox
         android:id="@+id/list_item_checkbox"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical" />
+        android:layout_gravity="center_vertical"
+        android:paddingLeft="16sp"
+        android:paddingRight="8sp" />
 
     <TextView
         android:id="@+id/list_item_title"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_width="0sp"
         android:layout_gravity="center_vertical"
         android:layout_weight="1"
         android:textSize="18sp"
-        tools:text="@string/app_name" />
+        tools:text="@string/app_name"
+        android:paddingTop="16sp"
+        android:paddingBottom="16sp"/>
 
     <TextView
         android:id="@+id/list_item_priority"
-        android:layout_width="wrap_content"
+        android:layout_width="20dp"
         android:layout_height="match_parent"
-        android:layout_gravity="end"
-        android:textAlignment="textEnd"
-        android:textSize="18sp"
-        tools:text="P1" />
+        android:layout_gravity="center_vertical"
+        android:textAlignment="center" />
 
 </LinearLayout>
