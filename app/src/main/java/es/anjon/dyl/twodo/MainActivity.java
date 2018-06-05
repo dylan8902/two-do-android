@@ -22,7 +22,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -190,12 +192,18 @@ public class MainActivity extends AppCompatActivity
         builder.setTitle("Add to list");
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_list_item, null);
         final EditText input = view.findViewById(R.id.list_item_title);
+        final Spinner spinner = (Spinner) view.findViewById(R.id.priority_spinner);
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
+                R.array.priorities_array, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
         builder.setView(view);
         builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
-                ref.add(new ListItem(input.getText().toString(), Boolean.FALSE));
+                String priority = spinner.getSelectedItem().toString();
+                ref.add(new ListItem(input.getText().toString(), priority, Boolean.FALSE));
             }
         });
         builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {

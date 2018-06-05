@@ -14,10 +14,20 @@
 
     <TextView
         android:id="@+id/list_item_title"
-        android:layout_width="wrap_content"
         android:layout_height="match_parent"
+        android:layout_width="0sp"
         android:layout_gravity="center_vertical"
+        android:layout_weight="1"
         android:textSize="18sp"
         tools:text="@string/app_name" />
+
+    <TextView
+        android:id="@+id/list_item_priority"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:textAlignment="textEnd"
+        android:textSize="18sp"
+        tools:text="P1" />
 
 </LinearLayout>

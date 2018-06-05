@@ -18,10 +18,12 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public TextView mTitleView;
+        public TextView mPriorityView;
         public CheckBox mCheckedView;
         public ViewHolder(View v) {
             super(v);
             mTitleView = v.findViewById(R.id.list_item_title);
+            mPriorityView = v.findViewById(R.id.list_item_priority);
             mCheckedView = v.findViewById(R.id.list_item_checkbox);
         }
     }
@@ -41,6 +43,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
     public void onBindViewHolder(ViewHolder holder, int position) {
         ListItem item = mListItems.get(position);
         holder.mTitleView.setText(item.getTitle());
+        holder.mPriorityView.setText(item.getPrioirty());
         holder.mCheckedView.setChecked(item.getChecked());
     }
 

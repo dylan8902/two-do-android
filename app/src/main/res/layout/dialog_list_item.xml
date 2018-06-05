@@ -10,4 +10,10 @@
         android:layout_height="wrap_content"
         android:layout_margin="5sp" />
 
+    <Spinner
+        android:id="@+id/priority_spinner"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:spinnerMode="dropdown" />
+
 </RelativeLayout>

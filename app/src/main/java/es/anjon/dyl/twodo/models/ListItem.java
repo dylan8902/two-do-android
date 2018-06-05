@@ -4,14 +4,16 @@ public class ListItem {
 
     String id;
     String title;
+    String prioirty;
     Boolean checked;
 
     public ListItem() {
 
     }
 
-    public ListItem(String title, Boolean checked) {
+    public ListItem(String title, String prioirty, Boolean checked) {
         this.title = title;
+        this.prioirty = prioirty;
         this.checked = checked;
     }
 
@@ -29,6 +31,14 @@ public class ListItem {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getPrioirty() {
+        return prioirty;
+    }
+
+    public void setPrioirty(String prioirty) {
+        this.prioirty = prioirty;
     }
 
     public Boolean getChecked() {
