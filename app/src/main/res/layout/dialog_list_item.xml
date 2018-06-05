@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+    android:padding="12sp"
     android:orientation="vertical">
 
     <EditText
@@ -11,11 +12,28 @@
         android:layout_height="wrap_content"
         android:layout_margin="5sp" />
 
-    <Spinner
-        android:id="@+id/priority_spinner"
-        android:layout_width="wrap_content"
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:spinnerMode="dropdown"
-        android:textSize="18sp" />
+        android:orientation="horizontal"
+        android:layout_marginTop="12sp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="Prioirty:"
+            android:textSize="20sp"/>
+
+        <Spinner
+            android:id="@+id/priority_spinner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:spinnerMode="dropdown"
+            android:textSize="20sp"
+            android:padding="20dp"/>
+
+    </LinearLayout>
 
 </LinearLayout>
