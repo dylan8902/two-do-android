@@ -1,6 +1,7 @@
 package es.anjon.dyl.twodo;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -10,15 +11,18 @@ import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -49,7 +53,6 @@ public class MainActivity extends AppCompatActivity
     private static final String TAG = "MainActivity";
     private User mUser;
     private Pair mPair;
-    private TwoDoList mList;
     private FloatingActionButton mFab;
     private NavigationView mNavigationView;
     private SubMenu mListMenu;
@@ -176,6 +179,32 @@ public class MainActivity extends AppCompatActivity
         }
         TwoDoList twoDoList = new TwoDoList("Test TwoDoList");
         mDb.collection(mPair.getListsCollectionPath()).add(twoDoList);
+    }
+
+    /**
+     * Creates a dialog to allow user to enter list item
+     * @param ref the collection to add the item to
+     */
+    private void addListItemDialog(final CollectionReference ref) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Add to list");
+        View view = LayoutInflater.from(this).inflate(R.layout.dialog_list_item, null);
+        final EditText input = view.findViewById(R.id.list_item_title);
+        builder.setView(view);
+        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                ref.add(new ListItem(input.getText().toString(), Boolean.FALSE));
+            }
+        });
+        builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        builder.show();
     }
 
     /**
@@ -330,7 +359,7 @@ public class MainActivity extends AppCompatActivity
         mFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ref.add(new ListItem("New Item", Boolean.FALSE));
+                addListItemDialog(ref);
             }
         });
     }
