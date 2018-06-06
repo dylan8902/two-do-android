@@ -148,12 +148,11 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_new_list) {
-            addList();
+            addListDialog();
         } else if (id == R.id.nav_settings) {
             startActivity(new Intent(this, SettingsActivity.class));
         } else {
-            // Update main content
-            loadList(item.getTitle().toString());
+            loadList(item.getTitleCondensed().toString());
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -173,14 +172,32 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
-     * Add a list to the pair collection
+     * Creates a dialog to allow user to add list to pair
      */
-    private void addList() {
+    private void addListDialog() {
         if (mPair == null) {
             return;
         }
-        TwoDoList twoDoList = new TwoDoList("Test TwoDoList");
-        mDb.collection(mPair.getListsCollectionPath()).add(twoDoList);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Add list");
+        View view = LayoutInflater.from(this).inflate(R.layout.dialog_list, null);
+        final EditText input = view.findViewById(R.id.list_title);
+        builder.setView(view);
+        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                TwoDoList twoDoList = new TwoDoList(input.getText().toString());
+                mDb.collection(mPair.getListsCollectionPath()).add(twoDoList);
+            }
+        });
+        builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        builder.show();
     }
 
     /**
@@ -245,6 +262,9 @@ public class MainActivity extends AppCompatActivity
             return;
         }
         mListMenu.clear();
+        if (mListsListener != null) {
+            mListsListener.remove();
+        }
         mListsListener = mDb.collection(mPair.getListsCollectionPath()).addSnapshotListener(new EventListener<QuerySnapshot>() {
             @Override
             public void onEvent(@Nullable QuerySnapshot snapshots,
@@ -260,8 +280,8 @@ public class MainActivity extends AppCompatActivity
                     switch (dc.getType()) {
                         case ADDED:
                             Log.d(TAG, "New twoDoList: " + twoDoList);
-                            mListMenu.add(Menu.NONE, twoDoList.hashCode(), 1, twoDoList.getId())
-                                    .setCheckable(true);
+                            mListMenu.add(Menu.NONE, twoDoList.hashCode(), 1, twoDoList.getTitle())
+                                    .setCheckable(true).setTitleCondensed(twoDoList.getId());
                             break;
                         case MODIFIED:
                             Log.d(TAG, "Modified twoDoList: " + dc.getDocument().getData());
