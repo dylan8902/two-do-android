@@ -11,7 +11,9 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
         android:paddingLeft="16sp"
-        android:paddingRight="8sp" />
+        android:paddingStart="16sp"
+        android:paddingRight="8sp"
+        android:paddingEnd="8sp" />
 
     <TextView
         android:id="@+id/list_item_title"
@@ -22,11 +24,11 @@
         android:textSize="18sp"
         tools:text="@string/app_name"
         android:paddingTop="16sp"
-        android:paddingBottom="16sp"/>
+        android:paddingBottom="16sp" />
 
     <TextView
         android:id="@+id/list_item_priority"
-        android:layout_width="20dp"
+        android:layout_width="10dp"
         android:layout_height="match_parent"
         android:layout_gravity="center_vertical"
         android:textAlignment="center" />
