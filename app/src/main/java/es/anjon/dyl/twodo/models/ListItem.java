@@ -1,10 +1,11 @@
 package es.anjon.dyl.twodo.models;
 
 import android.graphics.Color;
+import android.support.annotation.NonNull;
 
 import com.google.firebase.firestore.Exclude;
 
-public class ListItem {
+public class ListItem implements Comparable<ListItem> {
 
     String id;
     String title;
@@ -68,6 +69,12 @@ public class ListItem {
             default:
                 return Color.TRANSPARENT;
         }
+    }
+
+    @Exclude
+    @Override
+    public int compareTo(@NonNull ListItem o) {
+        return this.getTitle().compareTo(o.getTitle());
     }
 
 }

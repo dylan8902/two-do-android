@@ -42,6 +42,7 @@ import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import es.anjon.dyl.twodo.models.ListItem;
@@ -350,6 +351,7 @@ public class MainActivity extends AppCompatActivity
                             ListItem added = dc.getDocument().toObject(ListItem.class);
                             added.setId(dc.getDocument().getId());
                             mListItems.add(added);
+                            Collections.sort(mListItems);
                             mListItemKeys.add(added.getId());
                             mListAdapter.notifyItemInserted(mListItems.size() - 1);
                             break;
@@ -364,6 +366,7 @@ public class MainActivity extends AppCompatActivity
                             } else {
                                 Log.w(TAG, "Unknown list item :" + modified.getId());
                             }
+                            Collections.sort(mListItems);
                             break;
                         case REMOVED:
                             Log.d(TAG, "Removed List Item: " + dc.getDocument().getData());
@@ -371,8 +374,8 @@ public class MainActivity extends AppCompatActivity
                             removed.setId(dc.getDocument().getId());
                             int itemIndex = mListItemKeys.indexOf(removed.getId());
                             if (itemIndex > -1) {
-                                mListItemKeys.remove(itemIndex);
-                                mListItems.remove(itemIndex);
+                                mListItems.remove(removed);
+                                mListItemKeys.remove(removed);
                                 mListAdapter.notifyItemRemoved(itemIndex);
                             } else {
                                 Log.w(TAG, "Unknown list item :" + removed.getId());
