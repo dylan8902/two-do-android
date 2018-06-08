@@ -137,13 +137,17 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-
         if (id == R.id.action_settings) {
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
             return true;
+        } else if (id == R.id.action_order_by_title) {
+            mOrderBy = ListItem.orderByTitle();
+        } else if (id == R.id.action_order_by_priority) {
+            mOrderBy = ListItem.orderByPriority();
         }
-
+        Collections.sort(mListItems, mOrderBy);
+        mListAdapter.notifyDataSetChanged();
         return super.onOptionsItemSelected(item);
     }
 
