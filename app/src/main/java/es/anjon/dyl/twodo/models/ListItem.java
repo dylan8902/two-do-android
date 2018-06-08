@@ -5,6 +5,8 @@ import android.support.annotation.NonNull;
 
 import com.google.firebase.firestore.Exclude;
 
+import java.util.Comparator;
+
 public class ListItem implements Comparable<ListItem> {
 
     String id;
@@ -75,6 +77,55 @@ public class ListItem implements Comparable<ListItem> {
     @Override
     public int compareTo(@NonNull ListItem o) {
         return this.getTitle().compareTo(o.getTitle());
+    }
+
+    @Exclude
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ListItem listItem = (ListItem) o;
+
+        return getId().equals(listItem.getId());
+    }
+
+    @Exclude
+    @Override
+    public int hashCode() {
+        return getId().hashCode();
+    }
+
+    public static Comparator<ListItem> orderByTitle() {
+        return new Comparator<ListItem>() {
+            public int compare(ListItem item1, ListItem item2) {
+                String title1 = item1.getTitle();
+                if (title1 == null) {
+                    title1 = "P4";
+                }
+                String title2 = item2.getTitle();
+                if (title2 == null) {
+                    title2 = "P4";
+                }
+                return title1.compareTo(title2);
+            }
+        };
+    }
+
+    public static Comparator<ListItem> orderByPriority() {
+        return new Comparator<ListItem>() {
+            public int compare(ListItem item1, ListItem item2) {
+                String priority1 = item1.getPrioirty();
+                if (priority1 == null) {
+                    priority1 = "P4";
+                }
+                String priority2 = item2.getPrioirty();
+                if (priority2 == null) {
+                    priority2 = "P4";
+                }
+                return priority1.compareTo(priority2);
+            }
+        };
     }
 
 }

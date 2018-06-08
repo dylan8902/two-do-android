@@ -43,6 +43,7 @@ import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import es.anjon.dyl.twodo.models.ListItem;
@@ -66,6 +67,7 @@ public class MainActivity extends AppCompatActivity
     private List<String> mListItemKeys;
     private ListenerRegistration mListsListener;
     private ListenerRegistration mListItemsListener;
+    private Comparator<ListItem> mOrderBy;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,6 +99,7 @@ public class MainActivity extends AppCompatActivity
                 .setTimestampsInSnapshotsEnabled(true)
                 .build();
         mDb.setFirestoreSettings(settings);
+        mOrderBy = ListItem.orderByPriority();
     }
 
     @Override
@@ -351,28 +354,28 @@ public class MainActivity extends AppCompatActivity
                             ListItem added = dc.getDocument().toObject(ListItem.class);
                             added.setId(dc.getDocument().getId());
                             mListItems.add(added);
-                            Collections.sort(mListItems);
+                            Collections.sort(mListItems, mOrderBy);
                             mListItemKeys.add(added.getId());
-                            mListAdapter.notifyItemInserted(mListItems.size() - 1);
+                            mListAdapter.notifyDataSetChanged();
                             break;
                         case MODIFIED:
                             Log.d(TAG, "Modified List Item: " + dc.getDocument().getData());
                             ListItem modified = dc.getDocument().toObject(ListItem.class);
                             modified.setId(dc.getDocument().getId());
-                            int index = mListItemKeys.indexOf(modified.getId());
+                            int index = mListItems.indexOf(modified);
                             if (index > -1) {
                                 mListItems.set(index, modified);
-                                mListAdapter.notifyItemChanged(index);
                             } else {
                                 Log.w(TAG, "Unknown list item :" + modified.getId());
                             }
-                            Collections.sort(mListItems);
+                            Collections.sort(mListItems, mOrderBy);
+                            mListAdapter.notifyDataSetChanged();
                             break;
                         case REMOVED:
                             Log.d(TAG, "Removed List Item: " + dc.getDocument().getData());
                             ListItem removed = dc.getDocument().toObject(ListItem.class);
                             removed.setId(dc.getDocument().getId());
-                            int itemIndex = mListItemKeys.indexOf(removed.getId());
+                            int itemIndex = mListItems.indexOf(removed);
                             if (itemIndex > -1) {
                                 mListItems.remove(removed);
                                 mListItemKeys.remove(removed);
