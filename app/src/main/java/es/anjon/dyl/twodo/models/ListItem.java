@@ -5,7 +5,10 @@ import android.support.annotation.NonNull;
 
 import com.google.firebase.firestore.Exclude;
 
+import java.text.SimpleDateFormat;
 import java.util.Comparator;
+import java.util.Date;
+import java.util.Locale;
 
 public class ListItem implements Comparable<ListItem> {
 
@@ -13,6 +16,7 @@ public class ListItem implements Comparable<ListItem> {
     String title;
     String prioirty;
     Boolean checked;
+    Date dueDate;
 
     public ListItem() {
 
@@ -54,6 +58,30 @@ public class ListItem implements Comparable<ListItem> {
 
     public void setChecked(Boolean checked) {
         this.checked = checked;
+    }
+
+    public Date getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(Date dueDate) {
+        this.dueDate = dueDate;
+    }
+
+    public String getShortDueDate() {
+        if (getDueDate() == null) {
+            return "";
+        }
+        SimpleDateFormat sdf = new SimpleDateFormat("dd", Locale.UK);
+        return sdf.format(dueDate);
+    }
+
+    public String getShortDueMonth() {
+        if (getDueDate() == null) {
+            return "";
+        }
+        SimpleDateFormat sdf = new SimpleDateFormat("MMM", Locale.UK);
+        return sdf.format(dueDate).toUpperCase();
     }
 
     @Exclude

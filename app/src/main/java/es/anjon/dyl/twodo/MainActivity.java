@@ -1,5 +1,6 @@
 package es.anjon.dyl.twodo;
 
+import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -23,6 +24,8 @@ import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -41,7 +44,9 @@ import com.google.firebase.firestore.FirebaseFirestoreSettings;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -55,6 +60,7 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private static final String TAG = "MainActivity";
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     private User mUser;
     private Pair mPair;
     private FloatingActionButton mFab;
@@ -188,7 +194,7 @@ public class MainActivity extends AppCompatActivity
         }
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Add list");
-        View view = LayoutInflater.from(this).inflate(R.layout.dialog_list, null);
+        final View view = LayoutInflater.from(this).inflate(R.layout.dialog_list, null);
         final EditText input = view.findViewById(R.id.list_title);
         builder.setView(view);
         builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
@@ -222,13 +228,37 @@ public class MainActivity extends AppCompatActivity
                 R.array.priorities_array, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
+        final Button addDueDateButton = view.findViewById(R.id.due_date);
+        final Calendar dueDate = Calendar.getInstance();
+        final DatePickerDialog.OnDateSetListener dueDateSet = new DatePickerDialog.OnDateSetListener() {
+            @Override
+            public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+                dueDate.set(year, month, dayOfMonth);
+                addDueDateButton.setText(DATE_FORMAT.format(dueDate.getTime()));
+            }
+        };
+        final DatePickerDialog datePickerDialog = new DatePickerDialog(
+                view.getContext(), dueDateSet,
+                dueDate.get(Calendar.YEAR),
+                dueDate.get(Calendar.MONTH),
+                dueDate.get(Calendar.DATE));
+        addDueDateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                datePickerDialog.show();
+            }
+        });
         builder.setView(view);
         builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
                 String priority = spinner.getSelectedItem().toString();
-                ref.add(new ListItem(input.getText().toString(), priority, Boolean.FALSE));
+                ListItem listItem = new ListItem(input.getText().toString(), priority, Boolean.FALSE);
+                if (!addDueDateButton.getText().equals("yyyy-MM-dd")) {
+                    listItem.setDueDate(dueDate.getTime());
+                }
+                ref.add(listItem);
             }
         });
         builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {

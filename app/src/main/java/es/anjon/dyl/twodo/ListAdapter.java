@@ -20,11 +20,17 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
         public TextView mTitleView;
         public TextView mPriorityView;
         public CheckBox mCheckedView;
+        public TextView mDueDateView;
+        public TextView mDueMonthView;
+        public LinearLayout mCalendarView;
         public ViewHolder(View v) {
             super(v);
             mTitleView = v.findViewById(R.id.list_item_title);
             mPriorityView = v.findViewById(R.id.list_item_priority);
             mCheckedView = v.findViewById(R.id.list_item_checkbox);
+            mDueDateView = v.findViewById(R.id.list_item_due_date);
+            mDueMonthView = v.findViewById(R.id.list_item_due_month);
+            mCalendarView = v.findViewById(R.id.list_item_calendar);
         }
     }
 
@@ -45,6 +51,13 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
         holder.mTitleView.setText(item.getTitle());
         holder.mPriorityView.setBackgroundColor(item.getPrioirtyColour());
         holder.mCheckedView.setChecked(item.getChecked());
+        if (item.getDueDate() == null) {
+            holder.mCalendarView.setVisibility(View.GONE);
+        } else {
+            holder.mDueDateView.setText(item.getShortDueDate());
+            holder.mDueMonthView.setText(item.getShortDueMonth());
+            holder.mCalendarView.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
