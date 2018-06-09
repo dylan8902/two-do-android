@@ -46,7 +46,7 @@
             android:paddingBottom="2sp"
             android:background="#ff1a1a"
             android:textSize="9sp"
-            android:textColor="#000000"
+            android:textColor="#ffffff"
             android:textStyle="bold"
             android:textAlignment="center"
             tools:text="FEB" />
