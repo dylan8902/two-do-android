@@ -151,6 +151,8 @@ public class MainActivity extends AppCompatActivity
             mOrderBy = ListItem.orderByTitle();
         } else if (id == R.id.action_order_by_priority) {
             mOrderBy = ListItem.orderByPriority();
+        } else if (id == R.id.action_order_by_due_date) {
+            mOrderBy = ListItem.orderByDueDate();
         }
         Collections.sort(mListItems, mOrderBy);
         mListAdapter.notifyDataSetChanged();

@@ -6,6 +6,7 @@ import android.support.annotation.NonNull;
 import com.google.firebase.firestore.Exclude;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
@@ -152,6 +153,24 @@ public class ListItem implements Comparable<ListItem> {
                     priority2 = "P4";
                 }
                 return priority1.compareTo(priority2);
+            }
+        };
+    }
+
+    public static Comparator<ListItem> orderByDueDate() {
+        final Calendar cal = Calendar.getInstance();
+        return new Comparator<ListItem>() {
+            public int compare(ListItem item1, ListItem item2) {
+                cal.set(3000, 1, 1);
+                Date dueDate1 = item1.getDueDate();
+                if (dueDate1 == null) {
+                    dueDate1 = cal.getTime();
+                }
+                Date dueDate2 = item2.getDueDate();
+                if (dueDate2 == null) {
+                    dueDate2 = cal.getTime();
+                }
+                return dueDate1.compareTo(dueDate2);
             }
         };
     }

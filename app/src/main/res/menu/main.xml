@@ -20,4 +20,10 @@
         android:title="Order by priority"
         app:showAsAction="never" />
 
+    <item
+        android:id="@+id/action_order_by_due_date"
+        android:orderInCategory="98"
+        android:title="Order by due date"
+        app:showAsAction="never" />
+
 </menu>
