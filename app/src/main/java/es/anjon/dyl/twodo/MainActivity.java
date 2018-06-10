@@ -57,7 +57,8 @@ import es.anjon.dyl.twodo.models.TwoDoList;
 import es.anjon.dyl.twodo.models.User;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener,
+        ListAdapter.OnItemCheckedListener {
 
     private static final String TAG = "MainActivity";
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
@@ -74,6 +75,7 @@ public class MainActivity extends AppCompatActivity
     private ListenerRegistration mListsListener;
     private ListenerRegistration mListItemsListener;
     private Comparator<ListItem> mOrderBy;
+    private CollectionReference mListItemsRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,7 +98,7 @@ public class MainActivity extends AppCompatActivity
         mListItemKeys = new ArrayList<>();
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         mListView.setLayoutManager(layoutManager);
-        mListAdapter = new ListAdapter(mListItems);
+        mListAdapter = new ListAdapter(mListItems, this);
         mListView.setAdapter(mListAdapter);
         mListMenu = mNavigationView.getMenu().findItem(R.id.lists).getSubMenu();
         mFab = (FloatingActionButton) findViewById(R.id.fab);
@@ -185,6 +187,13 @@ public class MainActivity extends AppCompatActivity
             mListItemsListener.remove();
         }
         super.onPause();
+    }
+
+    @Override
+    public void onItemChecked(int position) {
+        ListItem item = mListItems.get(position);
+        Log.i(TAG, "onItemChecked: " + item);
+        mListItemsRef.document(item.getId()).set(item);
     }
 
     /**
@@ -372,9 +381,9 @@ public class MainActivity extends AppCompatActivity
         if (mListItemsListener != null) {
             mListItemsListener.remove();
         }
-        final CollectionReference ref = mDb.collection(mPair.getListsCollectionPath())
+        mListItemsRef = mDb.collection(mPair.getListsCollectionPath())
                 .document(listId).collection("items");
-        mListItemsListener = ref.addSnapshotListener(new EventListener<QuerySnapshot>() {
+        mListItemsListener = mListItemsRef.addSnapshotListener(new EventListener<QuerySnapshot>() {
             @Override
             public void onEvent(@Nullable QuerySnapshot snapshots,
                                 @Nullable FirebaseFirestoreException e) {
@@ -429,7 +438,7 @@ public class MainActivity extends AppCompatActivity
         mFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                addListItemDialog(ref);
+                addListItemDialog(mListItemsRef);
             }
         });
     }
