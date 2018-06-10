@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="horizontal">
+
+    <CheckBox
+        android:id="@+id/list_item_checkbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:paddingLeft="16sp"
+        android:paddingStart="16sp"
+        android:paddingRight="8sp"
+        android:paddingEnd="8sp" />
+
+    <TextView
+        android:id="@+id/list_item_title"
+        android:layout_height="wrap_content"
+        android:layout_width="0sp"
+        android:layout_gravity="center_vertical"
+        android:layout_weight="1"
+        android:textSize="18sp"
+        tools:text="@string/app_name"
+        android:paddingTop="16sp"
+        android:paddingBottom="16sp" />
+
+    <LinearLayout
+        android:id="@+id/list_item_calendar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_margin="8sp"
+        android:padding="1dp"
+        android:background="@drawable/calendar_border">
+
+        <TextView
+            android:id="@+id/list_item_due_month"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:paddingRight="10sp"
+            android:paddingLeft="10sp"
+            android:paddingTop="2sp"
+            android:paddingBottom="2sp"
+            android:background="#ff1a1a"
+            android:textSize="9sp"
+            android:textColor="#ffffff"
+            android:textStyle="bold"
+            android:textAlignment="center"
+            tools:text="FEB" />
+
+        <TextView
+            android:id="@+id/list_item_due_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:paddingRight="10sp"
+            android:paddingLeft="10sp"
+            android:paddingTop="3sp"
+            android:paddingBottom="3sp"
+            android:textSize="16sp"
+            android:textColor="#000000"
+            android:textAlignment="center"
+            tools:text="22"/>
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/list_item_priority"
+        android:layout_width="10dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="center_vertical"
+        android:textAlignment="center" />
+
+</LinearLayout>

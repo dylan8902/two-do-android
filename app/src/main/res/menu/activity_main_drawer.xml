@@ -3,35 +3,29 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:showIn="navigation_view">
 
-    <group android:checkableBehavior="single">
-        <item
-            android:id="@+id/nav_camera"
-            android:icon="@drawable/ic_menu_camera"
-            android:title="Import" />
-        <item
-            android:id="@+id/nav_gallery"
-            android:icon="@drawable/ic_menu_gallery"
-            android:title="Gallery" />
-        <item
-            android:id="@+id/nav_slideshow"
-            android:icon="@drawable/ic_menu_slideshow"
-            android:title="Slideshow" />
-        <item
-            android:id="@+id/nav_manage"
-            android:icon="@drawable/ic_menu_manage"
-            android:title="Tools" />
-    </group>
+    <item
+        android:id="@+id/nav_new_list"
+        android:orderInCategory="0"
+        android:icon="@android:drawable/ic_menu_add"
+        android:title="Create new list" />
 
-    <item android:title="Communicate">
+    <item
+        android:id="@+id/lists"
+        android:orderInCategory="1"
+        android:title="Lists"
+        android:checkableBehavior="single">
+        <menu></menu>
+    </item>
+
+    <item
+        android:title="Account"
+        android:orderInCategory="2">
         <menu>
             <item
-                android:id="@+id/nav_share"
-                android:icon="@drawable/ic_menu_share"
-                android:title="Share" />
-            <item
-                android:id="@+id/nav_send"
-                android:icon="@drawable/ic_menu_send"
-                android:title="Send" />
+                android:id="@+id/nav_settings"
+                android:orderInCategory="2"
+                android:icon="@drawable/ic_menu_manage"
+                android:title="Settings" />
         </menu>
     </item>
 

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:padding="12sp"
+    android:orientation="vertical">
+
+    <EditText
+        android:id="@+id/list_item_title"
+        android:inputType="textCapSentences"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="5sp" />
+
+    <LinearLayout
+        android:id="@+id/list_item_calendar"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="12sp"
+        android:layout_marginLeft="5sp"
+        android:layout_marginRight="5sp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="Prioirty:"
+            android:textSize="20sp"/>
+
+        <Spinner
+            android:id="@+id/priority_spinner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:spinnerMode="dropdown"
+            android:textSize="20sp"
+            android:padding="20dp"/>
+
+        <Button
+            android:id="@+id/due_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="yyyy-MM-dd"
+            android:textSize="16sp"
+            android:padding="8sp" />
+
+    </LinearLayout>
+
+</LinearLayout>
