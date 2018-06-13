@@ -58,7 +58,7 @@ import es.anjon.dyl.twodo.models.User;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
-        ListAdapter.OnItemCheckedListener {
+        ListAdapter.OnItemCheckedListener, ListAdapter.OnEditItemClickedListener {
 
     private static final String TAG = "MainActivity";
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
@@ -98,7 +98,7 @@ public class MainActivity extends AppCompatActivity
         mListItemKeys = new ArrayList<>();
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         mListView.setLayoutManager(layoutManager);
-        mListAdapter = new ListAdapter(mListItems, this);
+        mListAdapter = new ListAdapter(mListItems, this, this);
         mListView.setAdapter(mListAdapter);
         mListMenu = mNavigationView.getMenu().findItem(R.id.lists).getSubMenu();
         mFab = (FloatingActionButton) findViewById(R.id.fab);
@@ -196,6 +196,13 @@ public class MainActivity extends AppCompatActivity
         mListItemsRef.document(item.getId()).set(item);
     }
 
+    @Override
+    public void onEditItemClicked(int position) {
+        ListItem item = mListItems.get(position);
+        Log.i(TAG, "onEditItemClicked: " + item);
+        addEditListItemDialog(mListItemsRef, item);
+    }
+
     /**
      * Creates a dialog to allow user to add list to pair
      */
@@ -276,6 +283,77 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.cancel();
+            }
+        });
+        builder.show();
+    }
+
+    /**
+     * Creates a dialog to allow user to edit list item
+     * @param ref the collection to save the item to
+     * @param item the item to edit
+     */
+    private void addEditListItemDialog(final CollectionReference ref, final ListItem item) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Edit");
+        View view = LayoutInflater.from(this).inflate(R.layout.dialog_list_item, null);
+        final EditText input = view.findViewById(R.id.list_item_title);
+        input.setText(item.getTitle());
+        final Spinner spinner = (Spinner) view.findViewById(R.id.priority_spinner);
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
+                R.array.priorities_array, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        if (item.getPrioirty() != null) {
+            spinner.setSelection(adapter.getPosition(item.getPrioirty()));
+        }
+        final Button addDueDateButton = view.findViewById(R.id.due_date);
+        final Calendar dueDate = Calendar.getInstance();
+        if (item.getDueDate() != null) {
+            dueDate.setTime(item.getDueDate());
+            addDueDateButton.setText(DATE_FORMAT.format(dueDate.getTime()));
+        }
+        final DatePickerDialog.OnDateSetListener dueDateSet = new DatePickerDialog.OnDateSetListener() {
+            @Override
+            public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+                dueDate.set(year, month, dayOfMonth);
+                addDueDateButton.setText(DATE_FORMAT.format(dueDate.getTime()));
+            }
+        };
+        final DatePickerDialog datePickerDialog = new DatePickerDialog(
+                view.getContext(), dueDateSet,
+                dueDate.get(Calendar.YEAR),
+                dueDate.get(Calendar.MONTH),
+                dueDate.get(Calendar.DATE));
+        addDueDateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                datePickerDialog.show();
+            }
+        });
+        builder.setView(view);
+        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                item.setPrioirty(spinner.getSelectedItem().toString());
+                item.setTitle(input.getText().toString());
+                if (!addDueDateButton.getText().equals("yyyy-MM-dd")) {
+                    item.setDueDate(dueDate.getTime());
+                }
+                ref.document(item.getId()).set(item);
+            }
+        });
+        builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        builder.setNeutralButton("Delete", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                mListItemsRef.document(item.getId()).delete();
             }
         });
         builder.show();
