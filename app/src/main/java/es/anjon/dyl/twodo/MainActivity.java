@@ -155,6 +155,9 @@ public class MainActivity extends AppCompatActivity
             mOrderBy = ListItem.orderByPriority();
         } else if (id == R.id.action_order_by_due_date) {
             mOrderBy = ListItem.orderByDueDate();
+        } else if (id == R.id.action_delete_done) {
+            deleteDoneItems();
+            return true;
         }
         Collections.sort(mListItems, mOrderBy);
         mListAdapter.notifyDataSetChanged();
@@ -519,6 +522,17 @@ public class MainActivity extends AppCompatActivity
                 addListItemDialog(mListItemsRef);
             }
         });
+    }
+
+    /**
+     * Delete the items that have been marked as done
+     */
+    private void deleteDoneItems() {
+        for (ListItem item : mListItems) {
+            if (item.getChecked()) {
+                mListItemsRef.document(item.getId()).delete();
+            }
+        }
     }
 
 }
