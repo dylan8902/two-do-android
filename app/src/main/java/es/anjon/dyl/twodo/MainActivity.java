@@ -75,6 +75,7 @@ public class MainActivity extends AppCompatActivity
     private ListenerRegistration mListsListener;
     private ListenerRegistration mListItemsListener;
     private Comparator<ListItem> mOrderBy;
+    private DocumentReference mListRef;
     private CollectionReference mListItemsRef;
 
     @Override
@@ -157,6 +158,9 @@ public class MainActivity extends AppCompatActivity
             mOrderBy = ListItem.orderByDueDate();
         } else if (id == R.id.action_delete_done) {
             deleteDoneItems();
+            return true;
+        } else if (id == R.id.action_delete_list) {
+            deleteList();
             return true;
         }
         Collections.sort(mListItems, mOrderBy);
@@ -462,8 +466,8 @@ public class MainActivity extends AppCompatActivity
         if (mListItemsListener != null) {
             mListItemsListener.remove();
         }
-        mListItemsRef = mDb.collection(mPair.getListsCollectionPath())
-                .document(listId).collection("items");
+        mListRef = mDb.collection(mPair.getListsCollectionPath()).document(listId);
+        mListItemsRef = mListRef.collection("items");
         mListItemsListener = mListItemsRef.addSnapshotListener(new EventListener<QuerySnapshot>() {
             @Override
             public void onEvent(@Nullable QuerySnapshot snapshots,
@@ -515,7 +519,9 @@ public class MainActivity extends AppCompatActivity
 
             }
         });
-        mFab.setVisibility(View.VISIBLE);
+        mFab.setEnabled(true);
+        mFab.setClickable(true);
+        mFab.setAlpha(1.0f);
         mFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -532,6 +538,24 @@ public class MainActivity extends AppCompatActivity
             if (item.getChecked()) {
                 mListItemsRef.document(item.getId()).delete();
             }
+        }
+    }
+
+    /**
+     * Delete the list and clear the list items
+     */
+    private void deleteList() {
+        mFab.setEnabled(false);
+        mFab.setClickable(false);
+        mFab.setAlpha(0.2f);
+        if (mListItemsListener != null) {
+            mListItemsListener.remove();
+        }
+        mListItems.clear();
+        mListItemKeys.clear();
+        mListAdapter.notifyDataSetChanged();
+        if (mListRef != null) {
+            mListRef.delete();
         }
     }
 

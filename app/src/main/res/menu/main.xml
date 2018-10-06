@@ -3,6 +3,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/action_delete_list"
+        android:orderInCategory="102"
+        android:title="Delete list"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_delete_done"
         android:orderInCategory="101"
         android:title="Delete done items"
