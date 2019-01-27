@@ -23,6 +23,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.DatePicker;
@@ -58,7 +59,7 @@ import es.anjon.dyl.twodo.models.User;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
-        ListAdapter.OnItemCheckedListener {
+        ListAdapter.OnItemCheckedListener, ListAdapter.OnEditItemClickedListener {
 
     private static final String TAG = "MainActivity";
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
@@ -75,6 +76,7 @@ public class MainActivity extends AppCompatActivity
     private ListenerRegistration mListsListener;
     private ListenerRegistration mListItemsListener;
     private Comparator<ListItem> mOrderBy;
+    private DocumentReference mListRef;
     private CollectionReference mListItemsRef;
 
     @Override
@@ -98,7 +100,7 @@ public class MainActivity extends AppCompatActivity
         mListItemKeys = new ArrayList<>();
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         mListView.setLayoutManager(layoutManager);
-        mListAdapter = new ListAdapter(mListItems, this);
+        mListAdapter = new ListAdapter(mListItems, this, this);
         mListView.setAdapter(mListAdapter);
         mListMenu = mNavigationView.getMenu().findItem(R.id.lists).getSubMenu();
         mFab = (FloatingActionButton) findViewById(R.id.fab);
@@ -124,6 +126,13 @@ public class MainActivity extends AppCompatActivity
 
         SharedPreferences sharedPrefs = getSharedPreferences(Pair.SHARED_PREFS_KEY, Context.MODE_PRIVATE);
         loadPair(sharedPrefs.getString(Pair.SHARED_PREFS_KEY, null));
+
+        if (mListItemsRef != null) {
+            mListItems.clear();
+            mListItemKeys.clear();
+            mListAdapter.notifyDataSetChanged();
+            mListItemsListener = mListItemsRef.addSnapshotListener(listItemListener());
+        }
     }
 
     @Override
@@ -155,6 +164,15 @@ public class MainActivity extends AppCompatActivity
             mOrderBy = ListItem.orderByPriority();
         } else if (id == R.id.action_order_by_due_date) {
             mOrderBy = ListItem.orderByDueDate();
+        } else if (id == R.id.action_delete_done) {
+            deleteDoneItems();
+            return true;
+        } else if (id == R.id.action_delete_list) {
+            deleteList();
+            return true;
+        } else if (id == R.id.action_edit_list_name) {
+            editListName();
+            return true;
         }
         Collections.sort(mListItems, mOrderBy);
         mListAdapter.notifyDataSetChanged();
@@ -194,6 +212,13 @@ public class MainActivity extends AppCompatActivity
         ListItem item = mListItems.get(position);
         Log.i(TAG, "onItemChecked: " + item);
         mListItemsRef.document(item.getId()).set(item);
+    }
+
+    @Override
+    public void onEditItemClicked(int position) {
+        ListItem item = mListItems.get(position);
+        Log.i(TAG, "onEditItemClicked: " + item);
+        addEditListItemDialog(mListItemsRef, item);
     }
 
     /**
@@ -278,7 +303,86 @@ public class MainActivity extends AppCompatActivity
                 dialog.cancel();
             }
         });
-        builder.show();
+        input.requestFocus();
+        AlertDialog alertDialog = builder.create();
+        alertDialog.getWindow().setSoftInputMode(
+                WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        alertDialog.show();
+    }
+
+    /**
+     * Creates a dialog to allow user to edit list item
+     * @param ref the collection to save the item to
+     * @param item the item to edit
+     */
+    private void addEditListItemDialog(final CollectionReference ref, final ListItem item) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Edit");
+        View view = LayoutInflater.from(this).inflate(R.layout.dialog_list_item, null);
+        final EditText input = view.findViewById(R.id.list_item_title);
+        input.setText(item.getTitle());
+        final Spinner spinner = (Spinner) view.findViewById(R.id.priority_spinner);
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
+                R.array.priorities_array, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        if (item.getPrioirty() != null) {
+            spinner.setSelection(adapter.getPosition(item.getPrioirty()));
+        }
+        final Button addDueDateButton = view.findViewById(R.id.due_date);
+        final Calendar dueDate = Calendar.getInstance();
+        if (item.getDueDate() != null) {
+            dueDate.setTime(item.getDueDate());
+            addDueDateButton.setText(DATE_FORMAT.format(dueDate.getTime()));
+        }
+        final DatePickerDialog.OnDateSetListener dueDateSet = new DatePickerDialog.OnDateSetListener() {
+            @Override
+            public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+                dueDate.set(year, month, dayOfMonth);
+                addDueDateButton.setText(DATE_FORMAT.format(dueDate.getTime()));
+            }
+        };
+        final DatePickerDialog datePickerDialog = new DatePickerDialog(
+                view.getContext(), dueDateSet,
+                dueDate.get(Calendar.YEAR),
+                dueDate.get(Calendar.MONTH),
+                dueDate.get(Calendar.DATE));
+        addDueDateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                datePickerDialog.show();
+            }
+        });
+        builder.setView(view);
+        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                item.setPrioirty(spinner.getSelectedItem().toString());
+                item.setTitle(input.getText().toString());
+                if (!addDueDateButton.getText().equals("yyyy-MM-dd")) {
+                    item.setDueDate(dueDate.getTime());
+                }
+                ref.document(item.getId()).set(item);
+            }
+        });
+        builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        builder.setNeutralButton("Delete", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                mListItemsRef.document(item.getId()).delete();
+            }
+        });
+        input.requestFocus();
+        AlertDialog alertDialog = builder.create();
+        alertDialog.getWindow().setSoftInputMode(
+                WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        alertDialog.show();
     }
 
     /**
@@ -334,7 +438,7 @@ public class MainActivity extends AppCompatActivity
                             break;
                         case MODIFIED:
                             Log.d(TAG, "Modified twoDoList: " + dc.getDocument().getData());
-                            mListMenu.findItem(twoDoList.hashCode()).setTitle(twoDoList.getId());
+                            mListMenu.findItem(twoDoList.hashCode()).setTitle(twoDoList.getTitle());
                             break;
                         case REMOVED:
                             Log.d(TAG, "Removed twoDoList: " + dc.getDocument().getData());
@@ -381,9 +485,26 @@ public class MainActivity extends AppCompatActivity
         if (mListItemsListener != null) {
             mListItemsListener.remove();
         }
-        mListItemsRef = mDb.collection(mPair.getListsCollectionPath())
-                .document(listId).collection("items");
-        mListItemsListener = mListItemsRef.addSnapshotListener(new EventListener<QuerySnapshot>() {
+        mListRef = mDb.collection(mPair.getListsCollectionPath()).document(listId);
+        mListItemsRef = mListRef.collection("items");
+        mListItemsListener = mListItemsRef.addSnapshotListener(listItemListener());
+        mFab.setEnabled(true);
+        mFab.setClickable(true);
+        mFab.setAlpha(1.0f);
+        mFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                addListItemDialog(mListItemsRef);
+            }
+        });
+    }
+
+    /**
+     * Sets up the listener for list items
+     * @return event listener
+     */
+    private EventListener<QuerySnapshot> listItemListener() {
+        return new EventListener<QuerySnapshot>() {
             @Override
             public void onEvent(@Nullable QuerySnapshot snapshots,
                                 @Nullable FirebaseFirestoreException e) {
@@ -433,14 +554,71 @@ public class MainActivity extends AppCompatActivity
                 }
 
             }
-        });
-        mFab.setVisibility(View.VISIBLE);
-        mFab.setOnClickListener(new View.OnClickListener() {
+        };
+    }
+
+    /**
+     * Delete the items that have been marked as done
+     */
+    private void deleteDoneItems() {
+        for (ListItem item : mListItems) {
+            if (item.getChecked()) {
+                mListItemsRef.document(item.getId()).delete();
+            }
+        }
+    }
+
+    /**
+     * Delete the list and clear the list items
+     */
+    private void deleteList() {
+        mFab.setEnabled(false);
+        mFab.setClickable(false);
+        mFab.setAlpha(0.2f);
+        if (mListItemsListener != null) {
+            mListItemsListener.remove();
+        }
+        mListItems.clear();
+        mListItemKeys.clear();
+        mListAdapter.notifyDataSetChanged();
+        if (mListRef != null) {
+            mListRef.delete();
+        }
+    }
+
+    /**
+     * Edit the list name
+     */
+    private void editListName() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Edit");
+        final View view = LayoutInflater.from(this).inflate(R.layout.dialog_list, null);
+        final EditText input = view.findViewById(R.id.list_title);
+        builder.setView(view);
+        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                addListItemDialog(mListItemsRef);
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                if (mListRef != null) {
+                    String title = input.getText().toString();
+                    mListRef.update("title", title);
+                    Log.i(TAG, "Updating title of: " + mListRef.getId() + " to: " + title);
+                } else {
+                    Log.w(TAG, "Cannot update list title as there is no list reference");
+                }
             }
         });
+        builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        input.requestFocus();
+        AlertDialog alertDialog = builder.create();
+        alertDialog.getWindow().setSoftInputMode(
+                WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        alertDialog.show();
     }
 
 }

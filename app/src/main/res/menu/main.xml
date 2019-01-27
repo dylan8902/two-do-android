@@ -3,6 +3,24 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/action_edit_list_name"
+        android:orderInCategory="103"
+        android:title="Edit list name"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_delete_list"
+        android:orderInCategory="102"
+        android:title="Delete list"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_delete_done"
+        android:orderInCategory="101"
+        android:title="Delete done items"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_settings"
         android:orderInCategory="100"
         android:title="@string/action_settings"
@@ -22,7 +40,7 @@
 
     <item
         android:id="@+id/action_order_by_due_date"
-        android:orderInCategory="98"
+        android:orderInCategory="97"
         android:title="Order by due date"
         app:showAsAction="never" />
 
