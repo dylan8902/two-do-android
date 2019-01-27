@@ -169,6 +169,9 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.action_delete_list) {
             deleteList();
             return true;
+        } else if (id == R.id.action_edit_list_name) {
+            editListName();
+            return true;
         }
         Collections.sort(mListItems, mOrderBy);
         mListAdapter.notifyDataSetChanged();
@@ -426,7 +429,7 @@ public class MainActivity extends AppCompatActivity
                             break;
                         case MODIFIED:
                             Log.d(TAG, "Modified twoDoList: " + dc.getDocument().getData());
-                            mListMenu.findItem(twoDoList.hashCode()).setTitle(twoDoList.getId());
+                            mListMenu.findItem(twoDoList.hashCode()).setTitle(twoDoList.getTitle());
                             break;
                         case REMOVED:
                             Log.d(TAG, "Removed twoDoList: " + dc.getDocument().getData());
@@ -572,6 +575,37 @@ public class MainActivity extends AppCompatActivity
         if (mListRef != null) {
             mListRef.delete();
         }
+    }
+
+    /**
+     * Edit the list name
+     */
+    private void editListName() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Edit");
+        final View view = LayoutInflater.from(this).inflate(R.layout.dialog_list, null);
+        final EditText input = view.findViewById(R.id.list_title);
+        builder.setView(view);
+        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                if (mListRef != null) {
+                    String title = input.getText().toString();
+                    mListRef.update("title", title);
+                    Log.i(TAG, "Updating title of: " + mListRef.getId() + " to: " + title);
+                } else {
+                    Log.w(TAG, "Cannot update list title as there is no list reference");
+                }
+            }
+        });
+        builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        builder.show();
     }
 
 }

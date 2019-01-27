@@ -3,6 +3,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/action_edit_list_name"
+        android:orderInCategory="103"
+        android:title="Edit list name"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_delete_list"
         android:orderInCategory="102"
         android:title="Delete list"
