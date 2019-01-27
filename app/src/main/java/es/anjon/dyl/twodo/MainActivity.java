@@ -125,6 +125,13 @@ public class MainActivity extends AppCompatActivity
 
         SharedPreferences sharedPrefs = getSharedPreferences(Pair.SHARED_PREFS_KEY, Context.MODE_PRIVATE);
         loadPair(sharedPrefs.getString(Pair.SHARED_PREFS_KEY, null));
+
+        if (mListItemsRef != null) {
+            mListItems.clear();
+            mListItemKeys.clear();
+            mListAdapter.notifyDataSetChanged();
+            mListItemsListener = mListItemsRef.addSnapshotListener(listItemListener());
+        }
     }
 
     @Override
@@ -468,7 +475,24 @@ public class MainActivity extends AppCompatActivity
         }
         mListRef = mDb.collection(mPair.getListsCollectionPath()).document(listId);
         mListItemsRef = mListRef.collection("items");
-        mListItemsListener = mListItemsRef.addSnapshotListener(new EventListener<QuerySnapshot>() {
+        mListItemsListener = mListItemsRef.addSnapshotListener(listItemListener());
+        mFab.setEnabled(true);
+        mFab.setClickable(true);
+        mFab.setAlpha(1.0f);
+        mFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                addListItemDialog(mListItemsRef);
+            }
+        });
+    }
+
+    /**
+     * Sets up the listener for list items
+     * @return event listener
+     */
+    private EventListener<QuerySnapshot> listItemListener() {
+        return new EventListener<QuerySnapshot>() {
             @Override
             public void onEvent(@Nullable QuerySnapshot snapshots,
                                 @Nullable FirebaseFirestoreException e) {
@@ -518,16 +542,7 @@ public class MainActivity extends AppCompatActivity
                 }
 
             }
-        });
-        mFab.setEnabled(true);
-        mFab.setClickable(true);
-        mFab.setAlpha(1.0f);
-        mFab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                addListItemDialog(mListItemsRef);
-            }
-        });
+        };
     }
 
     /**
