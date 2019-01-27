@@ -23,6 +23,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.DatePicker;
@@ -125,6 +126,13 @@ public class MainActivity extends AppCompatActivity
 
         SharedPreferences sharedPrefs = getSharedPreferences(Pair.SHARED_PREFS_KEY, Context.MODE_PRIVATE);
         loadPair(sharedPrefs.getString(Pair.SHARED_PREFS_KEY, null));
+
+        if (mListItemsRef != null) {
+            mListItems.clear();
+            mListItemKeys.clear();
+            mListAdapter.notifyDataSetChanged();
+            mListItemsListener = mListItemsRef.addSnapshotListener(listItemListener());
+        }
     }
 
     @Override
@@ -161,6 +169,9 @@ public class MainActivity extends AppCompatActivity
             return true;
         } else if (id == R.id.action_delete_list) {
             deleteList();
+            return true;
+        } else if (id == R.id.action_edit_list_name) {
+            editListName();
             return true;
         }
         Collections.sort(mListItems, mOrderBy);
@@ -292,7 +303,11 @@ public class MainActivity extends AppCompatActivity
                 dialog.cancel();
             }
         });
-        builder.show();
+        input.requestFocus();
+        AlertDialog alertDialog = builder.create();
+        alertDialog.getWindow().setSoftInputMode(
+                WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        alertDialog.show();
     }
 
     /**
@@ -363,7 +378,11 @@ public class MainActivity extends AppCompatActivity
                 mListItemsRef.document(item.getId()).delete();
             }
         });
-        builder.show();
+        input.requestFocus();
+        AlertDialog alertDialog = builder.create();
+        alertDialog.getWindow().setSoftInputMode(
+                WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        alertDialog.show();
     }
 
     /**
@@ -419,7 +438,7 @@ public class MainActivity extends AppCompatActivity
                             break;
                         case MODIFIED:
                             Log.d(TAG, "Modified twoDoList: " + dc.getDocument().getData());
-                            mListMenu.findItem(twoDoList.hashCode()).setTitle(twoDoList.getId());
+                            mListMenu.findItem(twoDoList.hashCode()).setTitle(twoDoList.getTitle());
                             break;
                         case REMOVED:
                             Log.d(TAG, "Removed twoDoList: " + dc.getDocument().getData());
@@ -468,7 +487,24 @@ public class MainActivity extends AppCompatActivity
         }
         mListRef = mDb.collection(mPair.getListsCollectionPath()).document(listId);
         mListItemsRef = mListRef.collection("items");
-        mListItemsListener = mListItemsRef.addSnapshotListener(new EventListener<QuerySnapshot>() {
+        mListItemsListener = mListItemsRef.addSnapshotListener(listItemListener());
+        mFab.setEnabled(true);
+        mFab.setClickable(true);
+        mFab.setAlpha(1.0f);
+        mFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                addListItemDialog(mListItemsRef);
+            }
+        });
+    }
+
+    /**
+     * Sets up the listener for list items
+     * @return event listener
+     */
+    private EventListener<QuerySnapshot> listItemListener() {
+        return new EventListener<QuerySnapshot>() {
             @Override
             public void onEvent(@Nullable QuerySnapshot snapshots,
                                 @Nullable FirebaseFirestoreException e) {
@@ -518,16 +554,7 @@ public class MainActivity extends AppCompatActivity
                 }
 
             }
-        });
-        mFab.setEnabled(true);
-        mFab.setClickable(true);
-        mFab.setAlpha(1.0f);
-        mFab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                addListItemDialog(mListItemsRef);
-            }
-        });
+        };
     }
 
     /**
@@ -557,6 +584,41 @@ public class MainActivity extends AppCompatActivity
         if (mListRef != null) {
             mListRef.delete();
         }
+    }
+
+    /**
+     * Edit the list name
+     */
+    private void editListName() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Edit");
+        final View view = LayoutInflater.from(this).inflate(R.layout.dialog_list, null);
+        final EditText input = view.findViewById(R.id.list_title);
+        builder.setView(view);
+        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                if (mListRef != null) {
+                    String title = input.getText().toString();
+                    mListRef.update("title", title);
+                    Log.i(TAG, "Updating title of: " + mListRef.getId() + " to: " + title);
+                } else {
+                    Log.w(TAG, "Cannot update list title as there is no list reference");
+                }
+            }
+        });
+        builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        input.requestFocus();
+        AlertDialog alertDialog = builder.create();
+        alertDialog.getWindow().setSoftInputMode(
+                WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        alertDialog.show();
     }
 
 }
