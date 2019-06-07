@@ -572,18 +572,35 @@ public class MainActivity extends AppCompatActivity
      * Delete the list and clear the list items
      */
     private void deleteList() {
-        mFab.setEnabled(false);
-        mFab.setClickable(false);
-        mFab.setAlpha(0.2f);
-        if (mListItemsListener != null) {
-            mListItemsListener.remove();
-        }
-        mListItems.clear();
-        mListItemKeys.clear();
-        mListAdapter.notifyDataSetChanged();
-        if (mListRef != null) {
-            mListRef.delete();
-        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Delete List");
+        builder.setMessage("Are you sure you want to delete this list?");
+        builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                mFab.setEnabled(false);
+                mFab.setClickable(false);
+                mFab.setAlpha(0.2f);
+                if (mListItemsListener != null) {
+                    mListItemsListener.remove();
+                }
+                mListItems.clear();
+                mListItemKeys.clear();
+                mListAdapter.notifyDataSetChanged();
+                if (mListRef != null) {
+                    mListRef.delete();
+                }
+            }
+        });
+        builder.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
     }
 
     /**
