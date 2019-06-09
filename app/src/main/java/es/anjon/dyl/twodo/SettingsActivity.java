@@ -169,6 +169,10 @@ public class SettingsActivity extends Activity implements
             pair();
         } else if (i == R.id.unpair_button) {
             // TODO Removing pairing
+        } else if (i == R.id.subscribe_button) {
+            FirebaseMessaging.getInstance().subscribeToTopic(mPair.getId());
+        } else if  (i == R.id.unsubscribe_button) {
+            FirebaseMessaging.getInstance().unsubscribeFromTopic(mPair.getId());
         }
     }
 
@@ -410,6 +414,8 @@ public class SettingsActivity extends Activity implements
             findViewById(R.id.pair_button).setVisibility(View.GONE);
             findViewById(R.id.unpair_button).setVisibility(View.VISIBLE);
             findViewById(R.id.pair_instructions).setVisibility(View.GONE);
+            findViewById(R.id.subscribe_button).setVisibility(View.VISIBLE);
+            findViewById(R.id.unsubscribe_button).setVisibility(View.VISIBLE);
             mPairNameTextView.setText(mPair.getWith(mUser).getName());
         } else if (mPair.getId() == null) {
             // Starting to pair
