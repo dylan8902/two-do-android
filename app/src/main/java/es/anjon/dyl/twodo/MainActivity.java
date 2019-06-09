@@ -561,11 +561,28 @@ public class MainActivity extends AppCompatActivity
      * Delete the items that have been marked as done
      */
     private void deleteDoneItems() {
-        for (ListItem item : mListItems) {
-            if (item.getChecked()) {
-                mListItemsRef.document(item.getId()).delete();
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Delete Done Items");
+        builder.setMessage("Are you sure you want to delete the done items?");
+        builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                for (ListItem item : mListItems) {
+                    if (item.getChecked()) {
+                        mListItemsRef.document(item.getId()).delete();
+                    }
+                }
             }
-        }
+        });
+        builder.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
     }
 
     /**
