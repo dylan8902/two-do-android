@@ -248,7 +248,9 @@ public class MainActivity extends AppCompatActivity
                                 Log.i(TAG, "Loading new list created: " + twoDoList);
                                 mToolbar.setTitle(twoDoList.getTitle());
                                 loadList(documentReference.getId());
-                                mNavigationView.getCheckedItem().setChecked(false);
+                                if (mNavigationView.getCheckedItem() != null) {
+                                    mNavigationView.getCheckedItem().setChecked(false);
+                                }
                             }
                         });
             }
