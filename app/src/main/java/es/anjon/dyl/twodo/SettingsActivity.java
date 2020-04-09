@@ -9,9 +9,9 @@ import android.nfc.NfcAdapter;
 import android.nfc.NfcEvent;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.design.widget.Snackbar;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import com.google.android.material.snackbar.Snackbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
@@ -36,6 +36,7 @@ import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import es.anjon.dyl.twodo.models.Pair;
 import es.anjon.dyl.twodo.models.User;
@@ -61,6 +62,7 @@ public class SettingsActivity extends Activity implements
 
     /**
      * Find views and setup button handlers. Check if NFC, close if not
+     *
      * @param savedInstanceState the previous saved state
      */
     @Override
@@ -114,9 +116,10 @@ public class SettingsActivity extends Activity implements
 
     /**
      * Complete authentication if the Google Sign In is complete
+     *
      * @param requestCode the code to check to see if it is google's results
-     * @param resultCode the code from the activity
-     * @param data the data provied from the activity
+     * @param resultCode  the code from the activity
+     * @param data        the data provied from the activity
      */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -139,6 +142,7 @@ public class SettingsActivity extends Activity implements
 
     /**
      * Create the NFC message to send based on the new Pair Request
+     *
      * @param event NFC event
      * @return the NFC message to beam with the Pair Request id
      */
@@ -149,6 +153,7 @@ public class SettingsActivity extends Activity implements
 
     /**
      * Button click handlers
+     *
      * @param v the view clicked
      */
     @Override
@@ -164,6 +169,10 @@ public class SettingsActivity extends Activity implements
             pair();
         } else if (i == R.id.unpair_button) {
             // TODO Removing pairing
+        } else if (i == R.id.subscribe_button) {
+            FirebaseMessaging.getInstance().subscribeToTopic(mPair.getId());
+        } else if  (i == R.id.unsubscribe_button) {
+            FirebaseMessaging.getInstance().unsubscribeFromTopic(mPair.getId());
         }
     }
 
@@ -191,6 +200,7 @@ public class SettingsActivity extends Activity implements
 
     /**
      * Complete authentication with Google Account and update UI
+     *
      * @param acct Google Account
      */
     private void firebaseAuthWithGoogle(GoogleSignInAccount acct) {
@@ -271,6 +281,7 @@ public class SettingsActivity extends Activity implements
                     public void onSuccess(DocumentReference ref) {
                         Log.d(TAG, "DocumentSnapshot written with ID: " + ref.getId());
                         mPair.setId(ref.getId());
+                        FirebaseMessaging.getInstance().subscribeToTopic(mPair.getId());
                         mNfcAdapter.setNdefPushMessageCallback(
                                 SettingsActivity.this, SettingsActivity.this);
                         mSharedPrefs.edit().putString(Pair.SHARED_PREFS_KEY, mPair.getId()).apply();
@@ -289,6 +300,7 @@ public class SettingsActivity extends Activity implements
 
     /**
      * Load the pair details from the database and update UI
+     *
      * @param pairId database key
      */
     private void loadPair(String pairId) {
@@ -310,6 +322,7 @@ public class SettingsActivity extends Activity implements
 
     /**
      * Process the received beam and update pair details with user and update UI
+     *
      * @param intent Intent with beam data
      */
     void processPairIntent(Intent intent) {
@@ -326,6 +339,7 @@ public class SettingsActivity extends Activity implements
                 Pair pair = doc.toObject(Pair.class);
                 mPair.setFrom(pair.getFrom());
                 mDb.collection(Pair.COLLECTION_NAME).document(mPair.getId()).set(mPair);
+                FirebaseMessaging.getInstance().subscribeToTopic(mPair.getId());
                 updateUI();
             }
         });
@@ -400,6 +414,8 @@ public class SettingsActivity extends Activity implements
             findViewById(R.id.pair_button).setVisibility(View.GONE);
             findViewById(R.id.unpair_button).setVisibility(View.VISIBLE);
             findViewById(R.id.pair_instructions).setVisibility(View.GONE);
+            findViewById(R.id.subscribe_button).setVisibility(View.VISIBLE);
+            findViewById(R.id.unsubscribe_button).setVisibility(View.VISIBLE);
             mPairNameTextView.setText(mPair.getWith(mUser).getName());
         } else if (mPair.getId() == null) {
             // Starting to pair

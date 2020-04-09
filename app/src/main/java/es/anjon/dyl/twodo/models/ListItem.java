@@ -1,7 +1,7 @@
 package es.anjon.dyl.twodo.models;
 
 import android.graphics.Color;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.google.firebase.firestore.Exclude;
 
@@ -128,6 +128,9 @@ public class ListItem implements Comparable<ListItem> {
     public static Comparator<ListItem> orderByTitle() {
         return new Comparator<ListItem>() {
             public int compare(ListItem item1, ListItem item2) {
+                if (item1.getChecked()) {
+                    return 1;
+                }
                 String title1 = item1.getTitle();
                 if (title1 == null) {
                     title1 = "P4";
@@ -144,6 +147,9 @@ public class ListItem implements Comparable<ListItem> {
     public static Comparator<ListItem> orderByPriority() {
         return new Comparator<ListItem>() {
             public int compare(ListItem item1, ListItem item2) {
+                if (item1.getChecked()) {
+                    return 1;
+                }
                 String priority1 = item1.getPrioirty();
                 if (priority1 == null) {
                     priority1 = "P4";
@@ -161,6 +167,9 @@ public class ListItem implements Comparable<ListItem> {
         final Calendar cal = Calendar.getInstance();
         return new Comparator<ListItem>() {
             public int compare(ListItem item1, ListItem item2) {
+                if (item1.getChecked()) {
+                    return 1;
+                }
                 cal.set(3000, 1, 1);
                 Date dueDate1 = item1.getDueDate();
                 if (dueDate1 == null) {

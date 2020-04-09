@@ -6,17 +6,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.NavigationView;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -31,7 +20,19 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
@@ -65,6 +66,7 @@ public class MainActivity extends AppCompatActivity
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     private User mUser;
     private Pair mPair;
+    private Toolbar mToolbar;
     private FloatingActionButton mFab;
     private NavigationView mNavigationView;
     private SubMenu mListMenu;
@@ -83,12 +85,12 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(mToolbar);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+                this, drawer, mToolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
@@ -189,6 +191,7 @@ public class MainActivity extends AppCompatActivity
             startActivity(new Intent(this, SettingsActivity.class));
         } else {
             loadList(item.getTitleCondensed().toString());
+            mToolbar.setTitle(item.getTitle());
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -237,8 +240,19 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
-                TwoDoList twoDoList = new TwoDoList(input.getText().toString());
-                mDb.collection(mPair.getListsCollectionPath()).add(twoDoList);
+                final TwoDoList twoDoList = new TwoDoList(input.getText().toString());
+                mDb.collection(mPair.getListsCollectionPath()).add(twoDoList)
+                        .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                            @Override
+                            public void onSuccess(DocumentReference documentReference) {
+                                Log.i(TAG, "Loading new list created: " + twoDoList);
+                                mToolbar.setTitle(twoDoList.getTitle());
+                                loadList(documentReference.getId());
+                                if (mNavigationView.getCheckedItem() != null) {
+                                    mNavigationView.getCheckedItem().setChecked(false);
+                                }
+                            }
+                        });
             }
         });
         builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
@@ -247,11 +261,16 @@ public class MainActivity extends AppCompatActivity
                 dialog.cancel();
             }
         });
-        builder.show();
+        input.requestFocus();
+        AlertDialog alertDialog = builder.create();
+        alertDialog.getWindow().setSoftInputMode(
+                WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        alertDialog.show();
     }
 
     /**
      * Creates a dialog to allow user to enter list item
+     *
      * @param ref the collection to add the item to
      */
     private void addListItemDialog(final CollectionReference ref) {
@@ -312,7 +331,8 @@ public class MainActivity extends AppCompatActivity
 
     /**
      * Creates a dialog to allow user to edit list item
-     * @param ref the collection to save the item to
+     *
+     * @param ref  the collection to save the item to
      * @param item the item to edit
      */
     private void addEditListItemDialog(final CollectionReference ref, final ListItem item) {
@@ -452,6 +472,7 @@ public class MainActivity extends AppCompatActivity
 
     /**
      * Load the pair details from the database
+     *
      * @param pairId database key
      */
     private void loadPair(String pairId) {
@@ -472,6 +493,7 @@ public class MainActivity extends AppCompatActivity
 
     /**
      * Load the list details from the database and add listeners
+     *
      * @param listId database key
      */
     private void loadList(String listId) {
@@ -501,6 +523,7 @@ public class MainActivity extends AppCompatActivity
 
     /**
      * Sets up the listener for list items
+     *
      * @return event listener
      */
     private EventListener<QuerySnapshot> listItemListener() {
@@ -561,29 +584,63 @@ public class MainActivity extends AppCompatActivity
      * Delete the items that have been marked as done
      */
     private void deleteDoneItems() {
-        for (ListItem item : mListItems) {
-            if (item.getChecked()) {
-                mListItemsRef.document(item.getId()).delete();
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Delete Done Items");
+        builder.setMessage("Are you sure you want to delete the done items?");
+        builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                for (ListItem item : mListItems) {
+                    if (item.getChecked()) {
+                        mListItemsRef.document(item.getId()).delete();
+                    }
+                }
             }
-        }
+        });
+        builder.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
     }
 
     /**
      * Delete the list and clear the list items
      */
     private void deleteList() {
-        mFab.setEnabled(false);
-        mFab.setClickable(false);
-        mFab.setAlpha(0.2f);
-        if (mListItemsListener != null) {
-            mListItemsListener.remove();
-        }
-        mListItems.clear();
-        mListItemKeys.clear();
-        mListAdapter.notifyDataSetChanged();
-        if (mListRef != null) {
-            mListRef.delete();
-        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Delete List");
+        builder.setMessage("Are you sure you want to delete this list?");
+        builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                mFab.setEnabled(false);
+                mFab.setClickable(false);
+                mFab.setAlpha(0.2f);
+                if (mListItemsListener != null) {
+                    mListItemsListener.remove();
+                }
+                mListItems.clear();
+                mListItemKeys.clear();
+                mListAdapter.notifyDataSetChanged();
+                if (mListRef != null) {
+                    mListRef.delete();
+                }
+            }
+        });
+        builder.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
     }
 
     /**
@@ -602,6 +659,7 @@ public class MainActivity extends AppCompatActivity
                 if (mListRef != null) {
                     String title = input.getText().toString();
                     mListRef.update("title", title);
+                    mToolbar.setTitle(title);
                     Log.i(TAG, "Updating title of: " + mListRef.getId() + " to: " + title);
                 } else {
                     Log.w(TAG, "Cannot update list title as there is no list reference");
@@ -616,8 +674,7 @@ public class MainActivity extends AppCompatActivity
         });
         input.requestFocus();
         AlertDialog alertDialog = builder.create();
-        alertDialog.getWindow().setSoftInputMode(
-                WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        alertDialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
         alertDialog.show();
     }
 
