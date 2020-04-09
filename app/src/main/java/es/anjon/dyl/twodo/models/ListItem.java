@@ -1,7 +1,7 @@
 package es.anjon.dyl.twodo.models;
 
 import android.graphics.Color;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.google.firebase.firestore.Exclude;
 

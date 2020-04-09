@@ -100,4 +100,22 @@
         android:visibility="gone"
         tools:visibility="visible" />
 
+    <Button
+        android:id="@+id/subscribe_button"
+        style="@style/Widget.AppCompat.Button.Small"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Subscribe to reminders"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
+    <Button
+        android:id="@+id/unsubscribe_button"
+        style="@style/Widget.AppCompat.Button.Small"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Unsubscribe from reminders"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
 </LinearLayout>
